@@ -1,0 +1,11 @@
+{
+  "name": "my-ai-api",
+  "version": "1.0.0",
+  "description": "My personal API with some AI magic",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Justin Henricks",
+  "license": "ISC"
+}
