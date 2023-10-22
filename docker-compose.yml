@@ -9,7 +9,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=justin
-      - POSTGRES_DB=my-ai=api
+      - POSTGRES_DB=my-ai-api
 
 volumes:
   db:
