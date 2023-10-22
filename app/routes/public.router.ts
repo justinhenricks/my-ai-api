@@ -7,7 +7,7 @@ router.get("/health-check", async (req, res) => {
     const userCount = await db.user.count();
     console.log("Health check ✅");
     res.json({
-      message: `Alls well on the western front.`,
+      message: `Alls well on the justy front.`,
     });
   } catch (error) {
     console.log("Health check ❌");
