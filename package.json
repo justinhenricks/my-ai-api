@@ -4,6 +4,7 @@
   "description": "My personal API with some AI magic",
   "main": "index.js",
   "scripts": {
+    "typecheck": "tsc -b",
     "dev": "ts-node-dev --respawn --transpile-only app/index.ts",
     "build": "tsc",
     "start": "node build/index.js",
