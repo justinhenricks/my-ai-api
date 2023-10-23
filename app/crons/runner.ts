@@ -10,7 +10,5 @@ cron.schedule("0 * * * *", constructGigsJson);
 // For testing, once every 15 seconds:
 // cron.schedule("*/15 * * * * *", doEmbeddings);
 
-// cron.schedule("*/15 * * * * *", doEmbeddings);
-
 // Run the `doEmbeddings` function every 6 hours
 cron.schedule("0 0,6,12,18 * * *", doEmbeddings);
