@@ -30,7 +30,9 @@ export class QuestionsController {
         query: question,
       });
 
-      res.json({ response });
+      const answer = response.text;
+
+      res.json({ answer });
     } catch (error) {
       return next(ApiError.badRequest(error));
     }
