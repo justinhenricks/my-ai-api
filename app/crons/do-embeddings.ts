@@ -1,3 +1,129 @@
+import { Prisma } from "@prisma/client";
+import fs from "fs";
+import { JSONLoader } from "langchain/document_loaders/fs/json";
+import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import { TextLoader } from "langchain/document_loaders/fs/text";
+import { YoutubeLoader } from "langchain/document_loaders/web/youtube";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { PrismaVectorStore } from "langchain/vectorstores/prisma";
+import path from "path";
+import { DATA_DIR } from "../constants";
+import { db } from "../db";
+import { embeddings } from "../services/open-ai";
+
+const youtubeURLs = [
+  "https://www.youtube.com/watch?v=ynvldrONHOM", //5 benson licks
+  "https://www.youtube.com/watch?v=oYWuGU_NYCM", //just for me al green tutorial
+  "https://www.youtube.com/watch?v=79J4SAa31zk", //what they do by the roots tutorial
+  "https://www.youtube.com/watch?v=bZiD0vZduAQ", //barry harris ideas
+  "https://www.youtube.com/watch?v=6pr-vudBBl8", //the Root Dangelo
+  "https://www.youtube.com/watch?v=TxSxd2sFDl8", //scofield rhyhtm changes
+  // ... add more URLs as needed
+];
+
 export async function doEmbeddings() {
-  console.log("Doing embeddings 🤓");
+  try {
+    console.log("Doing embeddings 🤓");
+
+    const documents = [];
+    for (const file of resourceRegistry) {
+      const doc = await loadDocument(file);
+      documents.push(...doc);
+    }
+
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 500,
+      chunkOverlap: 0,
+    });
+
+    const splitDocs = await textSplitter.splitDocuments(documents);
+
+    const vectorStore = PrismaVectorStore.withModel(db).create(embeddings, {
+      prisma: Prisma,
+      tableName: "Document",
+      vectorColumnName: "vector",
+      columns: {
+        id: PrismaVectorStore.IdColumn,
+        content: PrismaVectorStore.ContentColumn,
+      },
+    });
+
+    await db.$queryRawUnsafe(`Truncate "Document" restart identity cascade;`);
+
+    await vectorStore.addModels(
+      await db.$transaction(
+        splitDocs.map((content) =>
+          db.document.create({ data: { content: content.pageContent } })
+        )
+      )
+    );
+  } catch (err) {
+    console.error("❌ Error doing embeddings", err);
+  }
+}
+
+// Define the types and interfaces
+interface FileResource {
+  path: string;
+  type: "text" | "json" | "pdf";
+}
+
+interface YoutubeResource {
+  url: string;
+  type: "youtube";
+}
+
+type Resource = FileResource | YoutubeResource;
+
+// Auto-build the file registry based on file extensions
+const dirPath = DATA_DIR;
+const files = fs.readdirSync(dirPath);
+const fileResources: FileResource[] = files
+  .map((file) => {
+    const ext = path.extname(file).toLowerCase();
+    let type: FileResource["type"];
+
+    switch (ext) {
+      case ".txt":
+        type = "text";
+        break;
+      case ".json":
+        type = "json";
+        break;
+      case ".pdf":
+        type = "pdf";
+        break;
+      default:
+        return null;
+    }
+
+    return { path: path.join(dirPath, file), type };
+  })
+  .filter(Boolean) as FileResource[]; // Filter out null entries and assert the type
+
+const youtubeResources: YoutubeResource[] = youtubeURLs.map((url) => {
+  return { url, type: "youtube" };
+});
+
+const resourceRegistry: Resource[] = [...fileResources, ...youtubeResources];
+
+async function loadDocument(resource: Resource) {
+  switch (resource.type) {
+    case "text":
+      return new TextLoader(resource.path).load();
+    case "json":
+      return new JSONLoader(resource.path).load();
+    case "pdf":
+      return new PDFLoader(resource.path).load();
+    case "youtube":
+      const youtubeLoader = YoutubeLoader.createFromUrl(resource.url, {
+        language: "en",
+        addVideoInfo: true,
+      });
+      return youtubeLoader.load();
+    default:
+      // Exhaustive type checking. If a new resource type is added and not handled, this will error
+      const _exhaustiveCheck: never = resource;
+      return _exhaustiveCheck;
+  }
 }
