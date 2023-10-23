@@ -1,4 +1,5 @@
 import express from "express";
+import { GoogleCalendarController } from "../controllers/";
 import { db } from "../db";
 const router = express.Router();
 
@@ -16,5 +17,7 @@ router.get("/health-check", async (req, res) => {
     });
   }
 });
+
+router.get("/events/:gcalendar_id", GoogleCalendarController.getAllEvents);
 
 export { router as publicRouter };
