@@ -1,15 +1,13 @@
-import { Prisma } from "@prisma/client";
 import fs from "fs";
 import { JSONLoader } from "langchain/document_loaders/fs/json";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { YoutubeLoader } from "langchain/document_loaders/web/youtube";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { PrismaVectorStore } from "langchain/vectorstores/prisma";
 import path from "path";
 import { DATA_DIR } from "../constants";
 import { db } from "../db";
-import { embeddings } from "../services/open-ai";
+import { vectorStore } from "../services/ai";
 
 const youtubeURLs = [
   "https://www.youtube.com/watch?v=ynvldrONHOM", //5 benson licks
@@ -37,16 +35,6 @@ export async function doEmbeddings() {
     });
 
     const splitDocs = await textSplitter.splitDocuments(documents);
-
-    const vectorStore = PrismaVectorStore.withModel(db).create(embeddings, {
-      prisma: Prisma,
-      tableName: "Document",
-      vectorColumnName: "vector",
-      columns: {
-        id: PrismaVectorStore.IdColumn,
-        content: PrismaVectorStore.ContentColumn,
-      },
-    });
 
     await db.$queryRawUnsafe(`Truncate "Document" restart identity cascade;`);
 
