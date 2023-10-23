@@ -27,5 +27,5 @@ const transformGigsJson = async (
     };
   });
 
-  return JSON.stringify({ transformedGigs });
+  return JSON.stringify({ gigs: transformedGigs });
 };
