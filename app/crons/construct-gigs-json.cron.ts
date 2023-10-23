@@ -9,9 +9,9 @@ export async function constructGigsJson() {
     const gigs = await listEvents(GOOGLE_GIGS_CALENDAR_ID);
     const gigsJson = await transformGigsJson(gigs);
     fs.writeFile(GIGS_FILE_PATH, gigsJson, "utf8");
-    console.log("Successfully wrote to gigs.json");
+    console.log("Successfully wrote to gigs.json ✅");
   } catch (err) {
-    console.error("Error writing to gigs.json:", err);
+    console.error("❌ Error writing to gigs.json:", err);
   }
 }
 
