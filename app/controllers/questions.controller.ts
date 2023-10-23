@@ -9,13 +9,15 @@ export class QuestionsController {
     try {
       const { question } = req.body;
 
-      const template = `Use the following pieces of context to answer the question at the end. If you come across dates/times to use in your answer, please format them and use a 12-hour clock. If you don't know the answer, just say that you don't know, don't try to make up an answer. After saying you don't know, you can say, "I will take my best guess" and then give your best guess. Use three sentences maximum and keep the answer as concise as possible. Always say "thanks for asking!" at the end of the answer.
+      const template = `
+      Use the provided context to answer the subsequent question. If the answer isn't apparent from the context, be transparent about it, then craft a response that's both kind and playful. If there are any dates or times, format them in a 12-hour clock format. Be succinct, and limit your response to three sentences at most. Conclude your answer with "Thanks for asking!"
       ----------------
       CONTEXT: {context}
       ----------------
       QUESTION: {query}
       ----------------
-      Helpful Answer:`;
+      RESPONSE:
+      `;
 
       const chain = RetrievalQAChain.fromLLM(
         llm,
