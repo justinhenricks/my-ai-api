@@ -5,7 +5,7 @@ export const listEvents = async (calendarId: string) => {
     const response = await googleCalendarClient.events.list({
       calendarId,
       timeMin: new Date().toISOString(),
-      maxResults: 300,
+      maxResults: 25,
       singleEvents: true,
       orderBy: "startTime",
     });
