@@ -1,6 +1,8 @@
 import express from "express";
 
+import { requireAuth } from "../middleware/auth";
 import { ApiError } from "../utils/api-error";
+import { apiRouter } from "./api.router";
 import { publicRouter } from "./public.router";
 const router = express.Router();
 
@@ -9,6 +11,8 @@ router.use("/public", publicRouter);
 router.get("/", async (req, res) => {
   res.send("Hello Justins Personal API!");
 });
+
+router.use("/api", requireAuth, apiRouter);
 
 router.use(
   (
