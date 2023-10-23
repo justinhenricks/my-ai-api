@@ -20,12 +20,37 @@ const transformGigsJson = async (
 ) => {
   if (!gigs) return JSON.stringify({ gigs: [] });
 
-  const transformedGigs = gigs.map((gig) => {
+  // Sort gigs by start date
+  // Sort gigs by start date
+  gigs.sort((a, b) => {
+    const dateA = new Date(a.start?.dateTime || "");
+    const dateB = new Date(b.start?.dateTime || "");
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  // Transform the first gig (next gig)
+  const nextGig = gigs[0];
+  const transformedNextGig = {
+    gig: `Justin's nearest upcoming gig is: ${nextGig.summary} at ${
+      nextGig.location
+    }. Scheduled for ${nextGig.start?.dateTime} to ${nextGig.end?.dateTime}. ${
+      nextGig.description ? `More Details: ${nextGig.description}` : ""
+    }`,
+  };
+
+  // Transform the remaining gigs
+  const transformedFutureGigs = gigs.slice(1).map((gig, index) => {
     const { start, end, summary, description, location } = gig;
     return {
-      gig: `Upcoming Gig Event Details - Title: ${summary} - Description: ${description} - Location: ${location} - Start Date and Time: ${start?.dateTime} - End Date and Time: ${end?.dateTime}`,
+      gig: `${
+        index + 2
+      }) Following that, another gig for Justin is: ${summary} at ${location}. It's set for ${
+        start?.dateTime
+      } to ${end?.dateTime}. Additional info: ${description}`,
     };
   });
 
-  return JSON.stringify({ gigs: transformedGigs });
+  return JSON.stringify({
+    gigs: [transformedNextGig, ...transformedFutureGigs],
+  });
 };
