@@ -31,7 +31,7 @@ const transformGigsJson = async (
   // Transform the first gig (next gig)
   const nextGig = gigs[0];
   const transformedNextGig = {
-    gig: `Justin's next upcoming gig is: ${nextGig.summary} at ${
+    gig: `Next gig is: ${nextGig.summary} at ${
       nextGig.location
     }. Scheduled for ${nextGig.start?.dateTime} to ${nextGig.end?.dateTime}. ${
       nextGig.description ? `More Details: ${nextGig.description}` : ""
