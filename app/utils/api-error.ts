@@ -13,7 +13,11 @@ export class ApiError extends Error {
     if (error instanceof Error) {
       return new ApiError(400, error.message, errors);
     }
-    return new ApiError(400, "Unknown error", errors);
+    return new ApiError(
+      400,
+      "Sorry, something went wrong please try again!",
+      errors
+    );
   }
 
   static notFound(message: string, errors?: any[]) {
