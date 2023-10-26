@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { db } from "../db";
 
 import { RetrievalQAChain } from "langchain/chains";
 import { PromptTemplate } from "langchain/prompts";
@@ -36,6 +37,13 @@ export class QuestionsController {
       });
 
       const answer = response.text;
+
+      await db.questionAnswer.create({
+        data: {
+          question,
+          answer,
+        },
+      });
 
       res.json({ answer });
     } catch (error) {

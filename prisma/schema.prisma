@@ -22,3 +22,10 @@ model Document {
   vector  Unsupported("vector")?
   createdAt DateTime @default(now())
 }
+
+model QuestionAnswer {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+}
