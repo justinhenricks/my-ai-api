@@ -7,3 +7,7 @@ export const GOOGLE_GIGS_CALENDAR_ID =
 export const DATA_DIR = path.join(process.cwd(), "/app/data");
 export const GIGS_FILE_PATH = path.join(process.cwd(), "/app/data/gigs.json");
 export const OPEN_AI_KEY = process.env.OPEN_AI_KEY;
+
+export const GEMINI_REST_API_URL = IS_PROD
+  ? "https://api.gemini.com"
+  : "https://api.sandbox.gemini.com";
