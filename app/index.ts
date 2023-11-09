@@ -4,6 +4,7 @@ import { WebSocket } from "ws";
 import { GEMINI_PUBLIC_WS_BASE_URL, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
+import { GeminiApiClient } from "./services/gemini";
 
 async function main() {
   const app = express();
@@ -129,6 +130,13 @@ async function main() {
       onNewPrice(close);
     }
   });
+
+  // Usage
+  const apiKey: string = process.env.GEMINI_API_KEY!;
+  const apiSecret: string = process.env.GEMINI_API_SECRET!;
+  const client = new GeminiApiClient(apiKey, apiSecret);
+
+  client.getBalances().then(console.log).catch(console.error);
 
   ws.on("close", function close() {
     console.log("Disconnected from the WebSocket server");
