@@ -123,6 +123,10 @@ export class GeminiApiClient {
     return this.makeRequest(`/v2/ticker/${symbol}`, "GET", {}, false);
   }
 
+  public async getSymbolDetails(symbol: string): Promise<any> {
+    return this.makeRequest(`/v1/symbols/details/${symbol}`, "GET", {}, false);
+  }
+
   // Private endpoint
   public async newOrder(orderData: NewOrderRequest): Promise<NewOrderResponse> {
     return this.makeRequest("/v1/order/new", "POST", orderData);

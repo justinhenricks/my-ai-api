@@ -138,20 +138,63 @@ async function main() {
   const client = new GeminiApiClient(apiKey, apiSecret);
 
   const orderId = uuidv4();
-  client
-    .newOrder({
-      symbol: "btcusd",
-      client_order_id: orderId,
-      type: "exchange limit",
-      side: "buy",
-      options: ["maker-or-cancel"],
-      amount: ".001",
-      price: "1",
+
+  const ticker = await client
+    .getTicker("btcusd")
+    .then((r) => {
+      return r;
     })
-    .then(console.log)
     .catch(console.error);
 
-  client.getBalances().then(console.log).catch(console.error);
+  const details = await client
+    .getSymbolDetails("btcusd")
+    .then((r) => {
+      return r;
+    })
+    .catch(console.error);
+
+  const ask = ticker.ask;
+  const tickSize = details.tick_size;
+
+  console.log("tick size", tickSize);
+
+  function roundToTickSize(number: number, tickSize: number) {
+    // First, determine the power of 10 corresponding to the tick size
+    const tickSizePower = Math.log10(tickSize);
+    // Calculate the number of decimal places
+    const decimalPlaces = tickSizePower < 0 ? Math.abs(tickSizePower) : 0;
+    // Calculate the rounding factor
+    const factor = Math.pow(10, decimalPlaces);
+    // Round the number to the nearest tick size and then divide by the factor to restore decimal places
+    const roundedNumber =
+      (Math.round((number * factor) / tickSize) * tickSize) / factor;
+    return Number(roundedNumber.toFixed(decimalPlaces));
+  }
+
+  const executionPrice = (ask * 0.5).toFixed(2);
+
+  const totalSpendAmount = 5;
+  const amountOfCoin = roundToTickSize(
+    totalSpendAmount / parseFloat(executionPrice),
+    tickSize
+  );
+
+  console.log("here is execution price", executionPrice);
+  console.log("here is amount of coin", amountOfCoin);
+  // client
+  //   .newOrder({
+  //     symbol: "btcusd",
+  //     client_order_id: orderId,
+  //     type: "exchange limit",
+  //     side: "buy",
+  //     options: ["maker-or-cancel"],
+  //     amount: amountOfCoin.toString(),
+  //     price: executionPrice,
+  //   })
+  //   .then(console.log)
+  //   .catch(console.error);
+
+  // client.getBalances().then(console.log).catch(console.error);
 
   client.getTicker("btcusd").then(console.log).catch(console.error);
 
