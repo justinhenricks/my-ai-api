@@ -1,11 +1,9 @@
 import "dotenv/config";
 import express from "express";
-import { v4 as uuidv4 } from "uuid";
-import { WebSocket } from "ws";
 import { GEMINI_PUBLIC_WS_BASE_URL, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
-import { GeminiApiClient } from "./services/gemini";
+import MarketDataWebSocket from "./web-sockets/market-data-socket";
 
 async function main() {
   const app = express();
@@ -14,197 +12,199 @@ async function main() {
   app.use(router);
 
   // Create a WebSocket client instance
-  const ws = new WebSocket(`${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`);
+  // const ws = new WebSocket(`${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`);
 
-  ws.on("open", function open() {
-    console.log("Connected to the WebSocket server!");
+  new MarketDataWebSocket(`${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`);
 
-    // Subscription message
-    const subscribeMessage = {
-      type: "subscribe",
-      subscriptions: [{ name: "candles_1m", symbols: ["BTCUSD"] }],
-    };
+  // ws.on("open", function open() {
+  //   console.log("Connected to the WebSocket server!");
 
-    // Send the message to subscribe
-    ws.send(JSON.stringify(subscribeMessage));
-  });
+  //   // Subscription message
+  //   const subscribeMessage = {
+  //     type: "subscribe",
+  //     subscriptions: [{ name: "candles_1m", symbols: ["BTCUSD"] }],
+  //   };
 
-  // Configuration for short-term and long-term EMA periods
-  const shortTermPeriod = 2; // e.g., 120 minutes for 2-hour EMA
-  const longTermPeriod = 6; // e.g., 360 minutes for 6-hour EMA
+  //   // Send the message to subscribe
+  //   ws.send(JSON.stringify(subscribeMessage));
+  // });
 
-  // State to keep track of previous EMA values
-  let prevShortTermEma: undefined | number = undefined;
-  let prevLongTermEma: undefined | number = undefined;
+  // // Configuration for short-term and long-term EMA periods
+  // const shortTermPeriod = 2; // e.g., 120 minutes for 2-hour EMA
+  // const longTermPeriod = 6; // e.g., 360 minutes for 6-hour EMA
 
-  // Price history - we only need to keep 'longTermPeriod' number of latest prices
-  let priceHistory: number[] = [];
+  // // State to keep track of previous EMA values
+  // let prevShortTermEma: undefined | number = undefined;
+  // let prevLongTermEma: undefined | number = undefined;
 
-  function onNewPrice(newPrice: number) {
-    // Add the new price to the history
-    console.log("ok in new price, here is price history", priceHistory);
-    priceHistory.push(newPrice);
+  // // Price history - we only need to keep 'longTermPeriod' number of latest prices
+  // let priceHistory: number[] = [];
 
-    // Ensure we don't keep more prices than necessary
-    if (priceHistory.length > longTermPeriod) {
-      priceHistory.shift(); // Remove the oldest price
-    }
+  // function onNewPrice(newPrice: number) {
+  //   // Add the new price to the history
+  //   console.log("ok in new price, here is price history", priceHistory);
+  //   priceHistory.push(newPrice);
 
-    // Calculate the short-term EMA if we have enough data points
-    if (priceHistory.length >= shortTermPeriod) {
-      let newShortTermEma = calculateEMA(
-        priceHistory.slice(-shortTermPeriod),
-        shortTermPeriod,
-        prevShortTermEma
-      );
-      if (newShortTermEma !== undefined) {
-        prevShortTermEma = newShortTermEma;
-        console.log(`New short-term EMA is: ${newShortTermEma}`);
-      }
-    }
+  //   // Ensure we don't keep more prices than necessary
+  //   if (priceHistory.length > longTermPeriod) {
+  //     priceHistory.shift(); // Remove the oldest price
+  //   }
 
-    // Calculate the long-term EMA if we have enough data points
-    if (priceHistory.length >= longTermPeriod) {
-      let newLongTermEma = calculateEMA(
-        priceHistory,
-        longTermPeriod,
-        prevLongTermEma
-      );
-      if (newLongTermEma !== undefined) {
-        prevLongTermEma = newLongTermEma;
-        console.log(`New long-term EMA is: ${newLongTermEma}`);
-      }
-    }
+  //   // Calculate the short-term EMA if we have enough data points
+  //   if (priceHistory.length >= shortTermPeriod) {
+  //     let newShortTermEma = calculateEMA(
+  //       priceHistory.slice(-shortTermPeriod),
+  //       shortTermPeriod,
+  //       prevShortTermEma
+  //     );
+  //     if (newShortTermEma !== undefined) {
+  //       prevShortTermEma = newShortTermEma;
+  //       console.log(`New short-term EMA is: ${newShortTermEma}`);
+  //     }
+  //   }
 
-    // Check if we should make a trade (EMA crossover logic)
-    if (prevShortTermEma !== undefined && prevLongTermEma !== undefined) {
-      // This is where you'd check for a crossover and decide whether to trade
-      if (prevShortTermEma > prevLongTermEma) {
-        // Signal for bullish crossover, potentially a buy signal
-      } else if (prevShortTermEma < prevLongTermEma) {
-        // Signal for bearish crossover, potentially a sell signal
-      }
-    }
-  }
+  //   // Calculate the long-term EMA if we have enough data points
+  //   if (priceHistory.length >= longTermPeriod) {
+  //     let newLongTermEma = calculateEMA(
+  //       priceHistory,
+  //       longTermPeriod,
+  //       prevLongTermEma
+  //     );
+  //     if (newLongTermEma !== undefined) {
+  //       prevLongTermEma = newLongTermEma;
+  //       console.log(`New long-term EMA is: ${newLongTermEma}`);
+  //     }
+  //   }
 
-  function calculateSMA(prices: number[], period: number) {
-    let sum = prices.slice(-period).reduce((acc, val) => acc + val, 0);
-    return sum / period;
-  }
+  //   // Check if we should make a trade (EMA crossover logic)
+  //   if (prevShortTermEma !== undefined && prevLongTermEma !== undefined) {
+  //     // This is where you'd check for a crossover and decide whether to trade
+  //     if (prevShortTermEma > prevLongTermEma) {
+  //       // Signal for bullish crossover, potentially a buy signal
+  //     } else if (prevShortTermEma < prevLongTermEma) {
+  //       // Signal for bearish crossover, potentially a sell signal
+  //     }
+  //   }
+  // }
 
-  function calculateEMA(
-    prices: number[],
-    period: number,
-    prevEma: number | undefined
-  ) {
-    // The smoothing constant
-    const k = 2 / (period + 1);
+  // function calculateSMA(prices: number[], period: number) {
+  //   let sum = prices.slice(-period).reduce((acc, val) => acc + val, 0);
+  //   return sum / period;
+  // }
 
-    // If we don't have a previous EMA, calculate the SMA for the first EMA value
-    // This assumes we have at least `period` number of prices
-    if (prevEma === undefined && prices.length >= period) {
-      prevEma = calculateSMA(prices, period);
-    }
+  // function calculateEMA(
+  //   prices: number[],
+  //   period: number,
+  //   prevEma: number | undefined
+  // ) {
+  //   // The smoothing constant
+  //   const k = 2 / (period + 1);
 
-    // If we still don't have a previous EMA (due to not enough data), return undefined
-    if (prevEma === undefined) {
-      return undefined;
-    }
+  //   // If we don't have a previous EMA, calculate the SMA for the first EMA value
+  //   // This assumes we have at least `period` number of prices
+  //   if (prevEma === undefined && prices.length >= period) {
+  //     prevEma = calculateSMA(prices, period);
+  //   }
 
-    // The latest price is the most recent price in our prices array
-    const latestPrice = prices[prices.length - 1];
+  //   // If we still don't have a previous EMA (due to not enough data), return undefined
+  //   if (prevEma === undefined) {
+  //     return undefined;
+  //   }
 
-    // Calculate the EMA based on the previous EMA and the latest price
-    let newEma = (latestPrice - prevEma) * k + prevEma;
+  //   // The latest price is the most recent price in our prices array
+  //   const latestPrice = prices[prices.length - 1];
 
-    return newEma;
-  }
+  //   // Calculate the EMA based on the previous EMA and the latest price
+  //   let newEma = (latestPrice - prevEma) * k + prevEma;
 
-  ws.on("message", function incoming(data) {
-    // Parse the incoming data
-    const message = JSON.parse(data);
+  //   return newEma;
+  // }
 
-    if (message.type === "candles_1m_updates") {
-      const candle = message.changes[0];
-      const [, , , , close] = candle;
+  // ws.on("message", function incoming(data) {
+  //   // Parse the incoming data
+  //   const message = JSON.parse(data);
 
-      onNewPrice(close);
-    }
-  });
+  //   if (message.type === "candles_1m_updates") {
+  //     const candle = message.changes[0];
+  //     const [, , , , close] = candle;
 
-  // Usage
-  const apiKey: string = process.env.GEMINI_API_KEY!;
-  const apiSecret: string = process.env.GEMINI_API_SECRET!;
-  const client = new GeminiApiClient(apiKey, apiSecret);
+  //     onNewPrice(close);
+  //   }
+  // });
 
-  const orderId = uuidv4();
+  // // Usage
+  // const apiKey: string = process.env.GEMINI_API_KEY!;
+  // const apiSecret: string = process.env.GEMINI_API_SECRET!;
+  // const client = new GeminiApiClient(apiKey, apiSecret);
 
-  const ticker = await client
-    .getTicker("btcusd")
-    .then((r) => {
-      return r;
-    })
-    .catch(console.error);
+  // const orderId = uuidv4();
 
-  const details = await client
-    .getSymbolDetails("btcusd")
-    .then((r) => {
-      return r;
-    })
-    .catch(console.error);
-
-  const ask = ticker.ask;
-  const tickSize = details.tick_size;
-
-  console.log("tick size", tickSize);
-
-  function roundToTickSize(number: number, tickSize: number) {
-    // First, determine the power of 10 corresponding to the tick size
-    const tickSizePower = Math.log10(tickSize);
-    // Calculate the number of decimal places
-    const decimalPlaces = tickSizePower < 0 ? Math.abs(tickSizePower) : 0;
-    // Calculate the rounding factor
-    const factor = Math.pow(10, decimalPlaces);
-    // Round the number to the nearest tick size and then divide by the factor to restore decimal places
-    const roundedNumber =
-      (Math.round((number * factor) / tickSize) * tickSize) / factor;
-    return Number(roundedNumber.toFixed(decimalPlaces));
-  }
-
-  const executionPrice = (ask * 0.5).toFixed(2);
-
-  const totalSpendAmount = 5;
-  const amountOfCoin = roundToTickSize(
-    totalSpendAmount / parseFloat(executionPrice),
-    tickSize
-  );
-
-  console.log("here is execution price", executionPrice);
-  console.log("here is amount of coin", amountOfCoin);
-  // client
-  //   .newOrder({
-  //     symbol: "btcusd",
-  //     client_order_id: orderId,
-  //     type: "exchange limit",
-  //     side: "buy",
-  //     options: ["maker-or-cancel"],
-  //     amount: amountOfCoin.toString(),
-  //     price: executionPrice,
+  // const ticker = await client
+  //   .getTicker("btcusd")
+  //   .then((r) => {
+  //     return r;
   //   })
-  //   .then(console.log)
   //   .catch(console.error);
 
-  // client.getBalances().then(console.log).catch(console.error);
+  // const details = await client
+  //   .getSymbolDetails("btcusd")
+  //   .then((r) => {
+  //     return r;
+  //   })
+  //   .catch(console.error);
 
-  client.getTicker("btcusd").then(console.log).catch(console.error);
+  // const ask = ticker.ask;
+  // const tickSize = details.tick_size;
 
-  ws.on("close", function close() {
-    console.log("Disconnected from the WebSocket server");
-  });
+  // console.log("tick size", tickSize);
 
-  ws.on("error", function error(error) {
-    console.error("WebSocket error: ", error);
-  });
+  // function roundToTickSize(number: number, tickSize: number) {
+  //   // First, determine the power of 10 corresponding to the tick size
+  //   const tickSizePower = Math.log10(tickSize);
+  //   // Calculate the number of decimal places
+  //   const decimalPlaces = tickSizePower < 0 ? Math.abs(tickSizePower) : 0;
+  //   // Calculate the rounding factor
+  //   const factor = Math.pow(10, decimalPlaces);
+  //   // Round the number to the nearest tick size and then divide by the factor to restore decimal places
+  //   const roundedNumber =
+  //     (Math.round((number * factor) / tickSize) * tickSize) / factor;
+  //   return Number(roundedNumber.toFixed(decimalPlaces));
+  // }
+
+  // const executionPrice = (ask * 0.5).toFixed(2);
+
+  // const totalSpendAmount = 5;
+  // const amountOfCoin = roundToTickSize(
+  //   totalSpendAmount / parseFloat(executionPrice),
+  //   tickSize
+  // );
+
+  // console.log("here is execution price", executionPrice);
+  // console.log("here is amount of coin", amountOfCoin);
+  // // client
+  // //   .newOrder({
+  // //     symbol: "btcusd",
+  // //     client_order_id: orderId,
+  // //     type: "exchange limit",
+  // //     side: "buy",
+  // //     options: ["maker-or-cancel"],
+  // //     amount: amountOfCoin.toString(),
+  // //     price: executionPrice,
+  // //   })
+  // //   .then(console.log)
+  // //   .catch(console.error);
+
+  // // client.getBalances().then(console.log).catch(console.error);
+
+  // client.getTicker("btcusd").then(console.log).catch(console.error);
+
+  // ws.on("close", function close() {
+  //   console.log("Disconnected from the WebSocket server");
+  // });
+
+  // ws.on("error", function error(error) {
+  //   console.error("WebSocket error: ", error);
+  // });
 
   app.listen(PORT, () => {
     console.log(`🚀 Server is running on port: ${PORT}`);
