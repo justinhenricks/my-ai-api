@@ -8,6 +8,12 @@ export const DATA_DIR = path.join(process.cwd(), "/app/data");
 export const GIGS_FILE_PATH = path.join(process.cwd(), "/app/data/gigs.json");
 export const OPEN_AI_KEY = process.env.OPEN_AI_KEY;
 
-export const GEMINI_REST_API_URL = IS_PROD
+export const GEMINI_REST_API_BASE_URL = IS_PROD
   ? "https://api.gemini.com"
   : "https://api.sandbox.gemini.com";
+
+export const GEMINI_PRIVATE_WS_BASE_URL = IS_PROD
+  ? "wss://api.gemini.com"
+  : "wss://api.sandbox.gemini.com";
+
+export const GEMINI_PUBLIC_WS_BASE_URL = "wss://api.gemini.com";
