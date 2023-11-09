@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import { v4 as uuidv4 } from "uuid";
 import { WebSocket } from "ws";
 import { GEMINI_PUBLIC_WS_BASE_URL, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
@@ -136,7 +137,23 @@ async function main() {
   const apiSecret: string = process.env.GEMINI_API_SECRET!;
   const client = new GeminiApiClient(apiKey, apiSecret);
 
+  const orderId = uuidv4();
+  client
+    .newOrder({
+      symbol: "btcusd",
+      client_order_id: orderId,
+      type: "exchange limit",
+      side: "buy",
+      options: ["maker-or-cancel"],
+      amount: ".001",
+      price: "1",
+    })
+    .then(console.log)
+    .catch(console.error);
+
   client.getBalances().then(console.log).catch(console.error);
+
+  client.getTicker("btcusd").then(console.log).catch(console.error);
 
   ws.on("close", function close() {
     console.log("Disconnected from the WebSocket server");

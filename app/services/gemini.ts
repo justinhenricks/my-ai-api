@@ -13,6 +13,45 @@ interface Payload {
   nonce: number;
 }
 
+type OrderExecutionOptions =
+  | "maker-or-cancel"
+  | "immediate-or-cancel"
+  | "fill-or-kill";
+
+interface NewOrderRequest {
+  client_order_id: string;
+  symbol: string;
+  amount: string;
+  price: string;
+  side: "buy" | "sell";
+  type: "exchange limit" | "exchange stop limit";
+  options?: OrderExecutionOptions[];
+  stop_price?: string;
+  account?: string;
+}
+
+interface NewOrderResponse {
+  order_id: string;
+  id: string;
+  symbol: string;
+  exchange: string;
+  avg_execution_price: string;
+  side: string;
+  type: string;
+  timestamp: string;
+  timestampms: number;
+  is_live: boolean;
+  is_cancelled: boolean;
+  is_hidden: boolean;
+  was_forced: boolean;
+  executed_amount: string;
+  remaining_amount: string;
+  options: string[];
+  price: string;
+  original_amount: string;
+  // Add any additional fields you need to handle in the response
+}
+
 export class GeminiApiClient {
   private apiKey: string;
   private apiSecret: string;
@@ -29,7 +68,7 @@ export class GeminiApiClient {
   }
 
   private getNonce(): number {
-    return Date.now(); // Nonce as current timestamp in milliseconds
+    return Date.now();
   }
 
   private signPayload(payload: Payload): {
@@ -45,39 +84,52 @@ export class GeminiApiClient {
 
   private async makeRequest(
     endpoint: string,
-    additionalPayload: object = {}
+    method: "GET" | "POST",
+    additionalPayload: object = {},
+    needAuth: boolean = true
   ): Promise<any> {
-    const payload: Payload = {
-      request: `/v1${endpoint}`,
-      nonce: this.getNonce(),
-      ...additionalPayload,
+    const url = `${this.baseURL}${endpoint}`;
+
+    const options: RequestInit = {
+      method: method,
+      headers: {},
     };
 
-    const { payloadEnc, signature } = this.signPayload(payload);
+    if (needAuth) {
+      const payload: Payload = {
+        request: endpoint,
+        nonce: this.getNonce(),
+        ...additionalPayload,
+      };
 
-    const headers = {
-      "Content-Type": "text/plain",
-      "Content-Length": "0",
-      "X-GEMINI-APIKEY": this.apiKey,
-      "X-GEMINI-PAYLOAD": payloadEnc,
-      "X-GEMINI-SIGNATURE": signature,
-      "Cache-Control": "no-cache",
-    };
+      const { payloadEnc, signature } = this.signPayload(payload);
 
-    console.log("about to make fetch", `${this.baseURL}${payload.request}`);
+      options.headers = {
+        "Content-Type": "text/plain",
+        "Content-Length": "0",
+        "X-GEMINI-APIKEY": this.apiKey,
+        "X-GEMINI-PAYLOAD": payloadEnc,
+        "X-GEMINI-SIGNATURE": signature,
+        "Cache-Control": "no-cache",
+      };
+    }
 
-    const response = await fetch(`${this.baseURL}${payload.request}`, {
-      method: "POST",
-      headers: headers,
-    });
-
+    const response = await fetch(url, options);
     return response.json();
   }
 
-  // Example function to get the account balance
-  public async getBalances(): Promise<BalanceResponse[]> {
-    return this.makeRequest("/balances");
+  // Public endpoint
+  public async getTicker(symbol: string): Promise<any> {
+    return this.makeRequest(`/v2/ticker/${symbol}`, "GET", {}, false);
   }
 
-  // Add more methods to interact with other endpoints...
+  // Private endpoint
+  public async newOrder(orderData: NewOrderRequest): Promise<NewOrderResponse> {
+    return this.makeRequest("/v1/order/new", "POST", orderData);
+  }
+
+  // Private endpoint
+  public async getBalances(): Promise<BalanceResponse[]> {
+    return this.makeRequest("/v1/balances", "POST");
+  }
 }
