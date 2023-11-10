@@ -28,8 +28,6 @@ export class Trader {
       const tickSize = details.tick_size;
       const orderId = uuidv4();
 
-      console.log("orderId", orderId);
-
       const executionPrice = (ticker.ask * executionPriceMultiplier).toFixed(2);
       const amountOfCoin = this.calculateAmountOfCoin(
         amountUSD,
@@ -52,34 +50,28 @@ export class Trader {
       });
 
       return orderResponse;
-
-      console.log("Order placed:", orderResponse);
-
-      //TODO persist the order, here is payload:
-
       /**
-       * }
-{
-  order_id: '200043297786',
-  id: '200043297786',
-  symbol: 'btcusd',
-  exchange: 'gemini',
-  avg_execution_price: '0.00',
-  side: 'buy',
-  type: 'exchange limit',
-  timestamp: '1699540685',
-  timestampms: 1699540685513,
-  is_live: true,
-  is_cancelled: false,
-  is_hidden: false,
-  was_forced: false,
-  executed_amount: '0',
-  client_order_id: '15862b28-bf54-46ac-b602-0d8c03065467',
-  options: [ 'maker-or-cancel' ],
-  price: '18849.06',
-  original_amount: '0.00026527',
-  remaining_amount: '0.00026527'
-}
+            {
+            order_id: '200043297786',
+            id: '200043297786',
+            symbol: 'btcusd',
+            exchange: 'gemini',
+            avg_execution_price: '0.00',
+            side: 'buy',
+            type: 'exchange limit',
+            timestamp: '1699540685',
+            timestampms: 1699540685513,
+            is_live: true,
+            is_cancelled: false,
+            is_hidden: false,
+            was_forced: false,
+            executed_amount: '0',
+            client_order_id: '15862b28-bf54-46ac-b602-0d8c03065467',
+            options: [ 'maker-or-cancel' ],
+            price: '18849.06',
+            original_amount: '0.00026527',
+            remaining_amount: '0.00026527'
+            }
        */
     } catch (error) {
       console.error("Trade execution failed:", error);
