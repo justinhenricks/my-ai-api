@@ -10,6 +10,9 @@ const apiSecret: string = process.env.GEMINI_API_SECRET!;
 const BASE_TRADE_AMOUNT = 10;
 const SELL_GAIN = 1.02;
 
+const SHORT_EMA_PERIOD = 30;
+const LONG_EMA_PERIOD = 360;
+
 class MarketDataWebSocket {
   private ws: WebSocket;
   private emaCalculator: EmaCalculator;
@@ -19,7 +22,7 @@ class MarketDataWebSocket {
 
   constructor(private url: string) {
     this.ws = new WebSocket(this.url);
-    this.emaCalculator = new EmaCalculator(30, 360);
+    this.emaCalculator = new EmaCalculator(SHORT_EMA_PERIOD, LONG_EMA_PERIOD);
     this.trader = new Trader(apiKey, apiSecret);
     this.ws.on("open", this.onOpen.bind(this));
     this.ws.on("message", this.onMessage.bind(this));
