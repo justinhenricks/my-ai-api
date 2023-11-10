@@ -1,10 +1,13 @@
 import WebSocket from "ws";
 import { db } from "../db";
+import { sendEmail } from "../services/postmark";
 import EmaCalculator from "../trading/ema-calculator";
 import { Trader } from "../trading/trader";
 
 const apiKey: string = process.env.GEMINI_API_KEY!;
 const apiSecret: string = process.env.GEMINI_API_SECRET!;
+
+const BASE_TRADE_AMOUNT = 10;
 
 class MarketDataWebSocket {
   private ws: WebSocket;
@@ -30,104 +33,119 @@ class MarketDataWebSocket {
     this.ws.send(JSON.stringify(subscribeMessage));
   }
 
+  // Where the magic happens
   private async onMessage(data: WebSocket.Data) {
-    const message = JSON.parse(data.toString());
-    if (message.type === "candles_1m_updates") {
-      const candle = message.changes[0];
-      const [, , , , close] = candle;
+    try {
+      const message = JSON.parse(data.toString());
+      if (message.type === "candles_1m_updates") {
+        const candle = message.changes[0];
+        const [, , , , close] = candle;
 
-      console.log("ok got a new message, here is close", close);
-      this.emaCalculator.updatePrice(close);
+        console.log("ok got a new message, here is close", close);
+        this.emaCalculator.updatePrice(close);
 
-      const shortTermEma = this.emaCalculator.getShortTermEma();
-      const longTermEma = this.emaCalculator.getLongTermEma();
+        const shortTermEma = this.emaCalculator.getShortTermEma();
+        const longTermEma = this.emaCalculator.getLongTermEma();
 
-      if (shortTermEma && longTermEma && shortTermEma > longTermEma) {
-        console.log("OK BUY SIGNAL");
+        if (shortTermEma && longTermEma && shortTermEma > longTermEma) {
+          console.log("OK BUY SIGNAL");
 
-        const openOrderCount = await db.trade.count({
-          where: { status: "open" },
-        });
-
-        console.log("CURRENT OPEN ORDERS: ", openOrderCount);
-
-        if (openOrderCount > 0) return;
-
-        console.log("WE BUYING! 🚀");
-
-        async function calculateTotalForNewTrade(
-          defaultValue: number
-        ): Promise<number> {
-          // Fetch all winning trades
-          const winningTrades = await db.trade.findMany({
-            where: { win: true },
+          const openOrderCount = await db.trade.count({
+            where: { status: "open" },
           });
 
-          // Calculate total profit from winning trades
-          const totalProfit = winningTrades.reduce(
-            (acc, trade) => acc + (trade.profit || 0),
-            0
-          );
+          console.log("CURRENT OPEN ORDERS: ", openOrderCount);
 
-          // If there's no profit, use the default value
-          if (totalProfit === 0) {
-            return defaultValue;
+          if (openOrderCount > 0) return;
+
+          console.log("WE BUYING! 🚀");
+
+          async function calculateTotalForNewTrade(
+            defaultValue: number
+          ): Promise<number> {
+            // Fetch all winning trades
+            const winningTrades = await db.trade.findMany({
+              where: { win: true },
+            });
+
+            // Calculate total profit from winning trades
+            const totalProfit = winningTrades.reduce(
+              (acc, trade) => acc + (trade.profit || 0),
+              0
+            );
+
+            // If there's no profit, use the default value
+            if (totalProfit === 0) {
+              return defaultValue;
+            }
+
+            // Otherwise, add the total profit to the default value
+            return defaultValue + totalProfit;
           }
 
-          // Otherwise, add the total profit to the default value
-          return defaultValue + totalProfit;
-        }
+          const amountToBuy = await calculateTotalForNewTrade(
+            BASE_TRADE_AMOUNT
+          );
 
-        const amountToBuy = await calculateTotalForNewTrade(5);
+          // basically a market order
+          const order = await this.trader.buy({
+            amountUSD: amountToBuy,
+            options: ["immediate-or-cancel"],
+            executionPriceMultiplier: 1.001,
+            symbol: "btcusd",
 
-        // basically a market order
-        const order = await this.trader.buy({
-          amountUSD: amountToBuy,
-          options: ["immediate-or-cancel"],
-          executionPriceMultiplier: 1.001,
-          symbol: "btcusd",
+            type: "exchange limit",
+          });
 
-          type: "exchange limit",
-        });
-
-        if (order && order.executed_amount) {
-          // OK - buy worked, lets add that to my open buys and set the limit sell
-          const {
-            client_order_id,
-            symbol,
-            avg_execution_price,
-            executed_amount,
-          } = order;
-
-          console.log(`ORDER PLACED, BOUGHT: ${amountToBuy} of ${symbol}`);
-
-          let amountSpent =
-            parseFloat(avg_execution_price) * parseFloat(executed_amount);
-
-          await db.trade.create({
-            data: {
-              id: client_order_id,
-              money_spent: parseFloat(amountSpent.toFixed(2)),
-              buy_price: parseFloat(avg_execution_price),
-              buy_coin_amount: parseFloat(executed_amount),
+          if (order && order.executed_amount) {
+            // OK - buy worked, lets add that to my open buys and set the limit sell
+            const {
+              client_order_id,
               symbol,
-            },
-          });
+              avg_execution_price,
+              executed_amount,
+            } = order;
 
-          const sellAtLimit = parseFloat(avg_execution_price) * 1.02;
+            console.log(`ORDER PLACED, BOUGHT: ${amountToBuy} of ${symbol}`);
 
-          const sellOrder = await this.trader.sell({
-            symbol,
-            sellAmount: executed_amount,
-            sellAtPrice: sellAtLimit.toString(),
-          });
+            let amountSpent =
+              parseFloat(avg_execution_price) * parseFloat(executed_amount);
 
-          console.log("SELL ORDER PLACED", sellOrder);
+            await db.trade.create({
+              data: {
+                id: client_order_id,
+                money_spent: parseFloat(amountSpent.toFixed(2)),
+                buy_price: parseFloat(avg_execution_price),
+                buy_coin_amount: parseFloat(executed_amount),
+                symbol,
+              },
+            });
+
+            const sellAtLimit = parseFloat(avg_execution_price) * 1.02;
+
+            const sellOrder = await this.trader.sell({
+              symbol,
+              sellAmount: executed_amount,
+              sellAtPrice: sellAtLimit.toString(),
+            });
+
+            console.log("SELL ORDER PLACED", sellOrder);
+
+            // send notification
+            const emailBody = `YO! ORDER PLACED, BOUGHT: ${amountToBuy} of ${symbol}`;
+
+            const email = sendEmail({
+              subject: "NEW GEMINI ORDER",
+              body: emailBody,
+            });
+          }
         }
-      }
 
-      console.log("short term ema", shortTermEma);
-      console.log("long term ema", longTermEma);
+        console.log("short term ema", shortTermEma);
+        console.log("long term ema", longTermEma);
+      }
+    } catch (error) {
+      console.error("ERROR IN MY MINUTE CANDLE LISTENER", error);
     }
   }
 
