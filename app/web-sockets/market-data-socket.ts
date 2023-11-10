@@ -13,6 +13,9 @@ const SELL_GAIN = 1.02;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
+//SHORT TERM TEST
+// const SHORT_EMA_PERIOD = 2;
+// const LONG_EMA_PERIOD = 5;
 class MarketDataWebSocket {
   private ws: WebSocket;
   private emaCalculator: EmaCalculator;
@@ -50,7 +53,7 @@ class MarketDataWebSocket {
         this.emaCalculator.updatePrice(close);
 
         console.log("PREVIOUS SHORT TERM EMA: ", this.prevShortTermEma);
-        console.log("PREVIOUS CURRENT LONG TERM EMA: ", this.prevLongTermEma);
+        console.log("PREVIOUS LONG TERM EMA: ", this.prevLongTermEma);
 
         const shortTermEma = this.emaCalculator.getShortTermEma();
         const longTermEma = this.emaCalculator.getLongTermEma();
