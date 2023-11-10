@@ -19,7 +19,7 @@ type OrderExecutionOptions =
   | "fill-or-kill";
 
 export interface NewOrderRequest {
-  client_order_id: string;
+  client_order_id?: string;
   symbol: string;
   amount: string;
   price: string;
@@ -36,6 +36,7 @@ interface NewOrderResponse {
   symbol: string;
   exchange: string;
   avg_execution_price: string;
+  client_order_id: string;
   side: string;
   type: string;
   timestamp: string;

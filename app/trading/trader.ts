@@ -20,9 +20,9 @@ export class Trader {
   }: {
     amountUSD: number;
     executionPriceMultiplier: number;
-  } & Pick<NewOrderRequest, "symbol" | "side" | "type" | "options">) {
+  } & Pick<NewOrderRequest, "symbol" | "type" | "options">) {
     try {
-      const { symbol, side, type, options } = orderDetails;
+      const { symbol, type, options } = orderDetails;
       const ticker = await this.client.getTicker(symbol);
       const details = await this.client.getSymbolDetails(symbol);
       const tickSize = details.tick_size;
@@ -41,25 +41,70 @@ export class Trader {
       console.log("Amount of coin:", amountOfCoin);
 
       // Now, place the order using the Gemini API client
-      //   const orderResponse = await this.client.newOrder({
-      //     symbol: symbol,
-      //     client_order_id: orderId,
-      //     type,
-      //     side,
-      //     options,
-      //     amount: amountOfCoin.toString(),
-      //     price: executionPrice,
-      //   });
+      const orderResponse = await this.client.newOrder({
+        symbol: symbol,
+        client_order_id: orderId,
+        type,
+        side: "buy",
+        options,
+        amount: amountOfCoin.toString(),
+        price: executionPrice,
+      });
 
-      //   console.log("Order placed:", orderResponse);
+      return orderResponse;
+
+      console.log("Order placed:", orderResponse);
+
+      //TODO persist the order, here is payload:
+
+      /**
+       * }
+{
+  order_id: '200043297786',
+  id: '200043297786',
+  symbol: 'btcusd',
+  exchange: 'gemini',
+  avg_execution_price: '0.00',
+  side: 'buy',
+  type: 'exchange limit',
+  timestamp: '1699540685',
+  timestampms: 1699540685513,
+  is_live: true,
+  is_cancelled: false,
+  is_hidden: false,
+  was_forced: false,
+  executed_amount: '0',
+  client_order_id: '15862b28-bf54-46ac-b602-0d8c03065467',
+  options: [ 'maker-or-cancel' ],
+  price: '18849.06',
+  original_amount: '0.00026527',
+  remaining_amount: '0.00026527'
+}
+       */
     } catch (error) {
       console.error("Trade execution failed:", error);
     }
   }
 
-  private calculateExecutionPrice(ask: number, tickSize: number): string {
-    const adjustedPrice = ask * 0.5;
-    return adjustedPrice.toFixed(this.getDecimalPlaces(tickSize));
+  public async sell({
+    symbol,
+    sellAtPrice,
+    sellAmount,
+  }: {
+    symbol: string;
+    sellAmount: string;
+    sellAtPrice: string;
+  }) {
+    const orderResponse = await this.client.newOrder({
+      symbol: symbol,
+      type: "exchange limit",
+      side: "sell",
+      options: ["maker-or-cancel"],
+      amount: sellAmount,
+      price: parseFloat(sellAtPrice).toFixed(2),
+    });
+
+    return orderResponse;
   }
 
   private calculateAmountOfCoin(
