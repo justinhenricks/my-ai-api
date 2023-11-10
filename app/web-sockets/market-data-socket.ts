@@ -1,4 +1,5 @@
 import WebSocket from "ws";
+import { IS_PROD } from "../constants";
 import { db } from "../db";
 import { sendEmail } from "../services/postmark";
 import EmaCalculator from "../trading/ema-calculator";
@@ -81,7 +82,7 @@ class MarketDataWebSocket {
 
           console.log("CURRENT OPEN ORDERS: ", openOrderCount);
 
-          if (openOrderCount >= MAX_OPEN_ORDERS) return;
+          if (openOrderCount >= MAX_OPEN_ORDERS || !IS_PROD) return;
 
           console.log("WE BUYING! 🚀");
 

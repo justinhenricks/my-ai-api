@@ -4,6 +4,7 @@ import { GEMINI_PUBLIC_WS_BASE_URL, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
 import MarketDataWebSocket from "./web-sockets/market-data-socket";
+import OrderEventsWebSocket from "./web-sockets/order-events-socket";
 
 async function main() {
   const app = express();
@@ -13,6 +14,10 @@ async function main() {
 
   const marketDataSocket = new MarketDataWebSocket(
     `${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`
+  );
+
+  const orderEventSocket = new OrderEventsWebSocket(
+    `wss://api.gemini.com/v1/order/events`
   );
 
   app.listen(PORT, () => {
