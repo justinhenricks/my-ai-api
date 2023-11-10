@@ -13,6 +13,8 @@ const SELL_GAIN = 1.02;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
+const MAX_OPEN_ORDERS = 1;
+
 //SHORT TERM TEST
 // const SHORT_EMA_PERIOD = 2;
 // const LONG_EMA_PERIOD = 5;
@@ -79,7 +81,7 @@ class MarketDataWebSocket {
 
           console.log("CURRENT OPEN ORDERS: ", openOrderCount);
 
-          if (openOrderCount > 0) return;
+          if (openOrderCount >= MAX_OPEN_ORDERS) return;
 
           console.log("WE BUYING! 🚀");
 
