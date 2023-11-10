@@ -11,9 +11,6 @@ async function main() {
   app.use(express.json());
   app.use(router);
 
-  // Create a WebSocket client instance
-  // const ws = new WebSocket(`${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`);
-
   const marketDataSocket = new MarketDataWebSocket(
     `${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`
   );
