@@ -1,7 +1,6 @@
 import WebSocket from "ws";
 import { IS_PROD } from "../constants";
 import { db } from "../db";
-import { sendEmail } from "../services/postmark";
 import EmaCalculator from "../trading/ema-calculator";
 import { Trader } from "../trading/trader";
 
@@ -9,7 +8,7 @@ const apiKey: string = process.env.GEMINI_API_KEY!;
 const apiSecret: string = process.env.GEMINI_API_SECRET!;
 
 const BASE_TRADE_AMOUNT = 10;
-const SELL_GAIN = 1.02;
+const SELL_GAIN = 1.01;
 
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
@@ -134,36 +133,16 @@ class MarketDataWebSocket {
 
             console.log(`ORDER PLACED, BOUGHT: ${amountToBuy} of ${symbol}`);
 
-            let amountSpent =
-              parseFloat(avg_execution_price) * parseFloat(executed_amount);
-
-            await db.trade.create({
-              data: {
-                id: client_order_id,
-                money_spent: parseFloat(amountSpent.toFixed(2)),
-                buy_price: parseFloat(avg_execution_price),
-                buy_coin_amount: parseFloat(executed_amount),
-                symbol,
-              },
-            });
-
             const sellAtLimit = parseFloat(avg_execution_price) * SELL_GAIN;
 
             const sellOrder = await this.trader.sell({
               symbol,
               sellAmount: executed_amount,
               sellAtPrice: sellAtLimit.toString(),
+              orderId: client_order_id,
             });
 
             console.log("SELL ORDER PLACED", sellOrder);
-
-            // send notification
-            const emailBody = `YO! ORDER PLACED, BOUGHT: ${amountToBuy} of ${symbol}`;
-
-            const email = sendEmail({
-              subject: "NEW GEMINI ORDER",
-              body: emailBody,
-            });
           }
         }
 
