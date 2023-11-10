@@ -39,9 +39,12 @@ model Trade {
   buy_coin_amount Float
 
   money_spent Float
-
+  
   status TradeStatus @default(open)
 
+
+  sell_price Float?
+  sell_coint_amount Float?
   profit Float?
 
   win Boolean @default(false)
