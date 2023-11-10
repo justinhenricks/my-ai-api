@@ -18,7 +18,7 @@ type OrderExecutionOptions =
   | "immediate-or-cancel"
   | "fill-or-kill";
 
-interface NewOrderRequest {
+export interface NewOrderRequest {
   client_order_id: string;
   symbol: string;
   amount: string;
