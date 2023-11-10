@@ -19,7 +19,7 @@ class MarketDataWebSocket {
 
   constructor(private url: string) {
     this.ws = new WebSocket(this.url);
-    this.emaCalculator = new EmaCalculator(30, 60);
+    this.emaCalculator = new EmaCalculator(30, 360);
     this.trader = new Trader(apiKey, apiSecret);
     this.ws.on("open", this.onOpen.bind(this));
     this.ws.on("message", this.onMessage.bind(this));
