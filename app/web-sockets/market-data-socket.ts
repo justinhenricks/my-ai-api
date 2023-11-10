@@ -8,6 +8,7 @@ const apiKey: string = process.env.GEMINI_API_KEY!;
 const apiSecret: string = process.env.GEMINI_API_SECRET!;
 
 const BASE_TRADE_AMOUNT = 10;
+const SELL_GAIN = 1.02;
 
 class MarketDataWebSocket {
   private ws: WebSocket;
@@ -121,7 +122,7 @@ class MarketDataWebSocket {
               },
             });
 
-            const sellAtLimit = parseFloat(avg_execution_price) * 1.02;
+            const sellAtLimit = parseFloat(avg_execution_price) * SELL_GAIN;
 
             const sellOrder = await this.trader.sell({
               symbol,
