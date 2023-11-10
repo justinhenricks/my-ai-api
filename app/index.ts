@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { GEMINI_PUBLIC_WS_BASE_URL, PORT } from "./constants";
+import { GEMINI_PUBLIC_WS_BASE_URL, IS_PROD, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
 import MarketDataWebSocket from "./web-sockets/market-data-socket";
@@ -20,7 +20,11 @@ async function main() {
   );
 
   app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port: ${PORT}`);
+    console.log(
+      `🚀 Server is running on port: ${PORT} and in ${
+        IS_PROD ? "production" : "development."
+      }`
+    );
   });
 }
 
