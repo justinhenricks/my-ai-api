@@ -13,7 +13,7 @@ const SELL_GAIN = 1.01;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
-const MAX_OPEN_ORDERS = 1;
+const MAX_OPEN_ORDERS = 2;
 
 //SHORT TERM TEST
 // const SHORT_EMA_PERIOD = 2;
