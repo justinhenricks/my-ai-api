@@ -82,14 +82,17 @@ export class Trader {
     symbol,
     sellAtPrice,
     sellAmount,
+    orderId,
   }: {
     symbol: string;
     sellAmount: string;
     sellAtPrice: string;
+    orderId: string;
   }) {
     const orderResponse = await this.client.newOrder({
       symbol: symbol,
       type: "exchange limit",
+      client_order_id: orderId,
       side: "sell",
       options: ["maker-or-cancel"],
       amount: sellAmount,

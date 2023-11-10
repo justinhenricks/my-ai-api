@@ -5,7 +5,6 @@ import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
 import MarketDataWebSocket from "./web-sockets/market-data-socket";
 import OrderEventsWebSocket from "./web-sockets/order-events-socket";
-
 async function main() {
   const app = express();
 
