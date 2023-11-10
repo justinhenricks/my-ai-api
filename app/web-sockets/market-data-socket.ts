@@ -64,7 +64,7 @@ class MarketDataWebSocket {
           this.prevShortTermEma &&
           this.prevLongTermEma &&
           this.prevShortTermEma <= this.prevLongTermEma &&
-          shortTermEma > longTermEma
+          shortTermEma >= longTermEma
         ) {
           console.log(
             "OK BUY SIGNAL, LETS CHECK TO SEE IF WE HAVE ANY OPEN ONES"
