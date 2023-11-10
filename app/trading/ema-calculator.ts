@@ -31,7 +31,6 @@ class EmaCalculator {
       );
       if (newShortTermEma !== undefined) {
         this.prevShortTermEma = newShortTermEma;
-        console.log(`New short-term EMA is: ${newShortTermEma}`);
       }
     }
 
@@ -44,7 +43,6 @@ class EmaCalculator {
       );
       if (newLongTermEma !== undefined) {
         this.prevLongTermEma = newLongTermEma;
-        console.log(`New long-term EMA is: ${newLongTermEma}`);
       }
     }
   }

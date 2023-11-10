@@ -14,6 +14,8 @@ class MarketDataWebSocket {
   private ws: WebSocket;
   private emaCalculator: EmaCalculator;
   private trader: Trader;
+  private prevShortTermEma: number | undefined = undefined;
+  private prevLongTermEma: number | undefined = undefined;
 
   constructor(private url: string) {
     this.ws = new WebSocket(this.url);
@@ -44,11 +46,26 @@ class MarketDataWebSocket {
 
         this.emaCalculator.updatePrice(close);
 
+        console.log("PREVIOUS SHORT TERM EMA: ", this.prevShortTermEma);
+        console.log("PREVIOUS CURRENT LONG TERM EMA: ", this.prevLongTermEma);
+
         const shortTermEma = this.emaCalculator.getShortTermEma();
         const longTermEma = this.emaCalculator.getLongTermEma();
 
-        if (shortTermEma && longTermEma && shortTermEma > longTermEma) {
-          console.log("OK BUY SIGNAL");
+        console.log("CURRENT SHORT TERM EMA: ", shortTermEma);
+        console.log("CURRENT CURRENT LONG TERM EMA: ", longTermEma);
+
+        if (
+          shortTermEma &&
+          longTermEma &&
+          this.prevShortTermEma &&
+          this.prevLongTermEma &&
+          this.prevShortTermEma <= this.prevLongTermEma &&
+          shortTermEma > longTermEma
+        ) {
+          console.log(
+            "OK BUY SIGNAL, LETS CHECK TO SEE IF WE HAVE ANY OPEN ONES"
+          );
 
           const openOrderCount = await db.trade.count({
             where: { status: "open" },
@@ -141,8 +158,9 @@ class MarketDataWebSocket {
           }
         }
 
-        console.log("SHORT TERM EMA: ", shortTermEma);
-        console.log("LONG TERM EMA: ", longTermEma);
+        // Store the current EMA values for the next comparison
+        this.prevShortTermEma = shortTermEma;
+        this.prevLongTermEma = longTermEma;
       }
     } catch (error) {
       console.error("ERROR IN MY MINUTE CANDLE LISTENER", error);
