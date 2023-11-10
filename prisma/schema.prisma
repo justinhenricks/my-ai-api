@@ -29,3 +29,28 @@ model QuestionAnswer {
   answer    String
   createdAt DateTime @default(now())
 }
+
+model Trade {
+  id String @id
+
+  symbol String
+
+  buy_price Float
+  buy_coin_amount Float
+
+  money_spent Float
+
+  status TradeStatus @default(open)
+
+  profit Float?
+
+  win Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
+
+enum TradeStatus {
+  open
+  closed
+}
