@@ -42,7 +42,6 @@ class MarketDataWebSocket {
         const candle = message.changes[0];
         const [, , , , close] = candle;
 
-        console.log("ok got a new message, here is close", close);
         this.emaCalculator.updatePrice(close);
 
         const shortTermEma = this.emaCalculator.getShortTermEma();
@@ -142,8 +141,8 @@ class MarketDataWebSocket {
           }
         }
 
-        console.log("short term ema", shortTermEma);
-        console.log("long term ema", longTermEma);
+        console.log("SHORT TERM EMA: ", shortTermEma);
+        console.log("LONG TERM EMA: ", longTermEma);
       }
     } catch (error) {
       console.error("ERROR IN MY MINUTE CANDLE LISTENER", error);
