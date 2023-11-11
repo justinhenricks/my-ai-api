@@ -13,6 +13,8 @@ class OrderEventsWebSocket {
     this.lastHeartbeat = Date.now();
     this.heartbeatInterval = undefined; // Initialize here
     // Setup WebSocket connection
+
+    console.log("here are headers", headers);
     this.ws = new WebSocket("wss://api.gemini.com/v1/order/events", {
       headers,
     });
@@ -165,18 +167,18 @@ class OrderEventsWebSocket {
     }
   }
 
-  private onClose() {
+  protected onClose() {
     console.log("Disconnected from the MarketData WebSocket server!");
     clearInterval(this.heartbeatInterval);
     // Handle reconnection logic here
   }
 
-  private onError(error: Error) {
+  protected onError(error: Error) {
     console.error("WebSocket error:", error);
     // Handle error and possible reconnection logic here
   }
 
-  private reconnect() {
+  protected reconnect() {
     this.ws.close();
     const headers = this.getHeaders();
     this.ws = new WebSocket(this.url, {

@@ -1,4 +1,6 @@
 import { createHmac } from "crypto";
+import WebSocket from "ws";
+import { IS_PROD } from "../constants";
 import { BaseWebSocket, MessageHandler } from "./base-socket";
 
 export type Subscription = {
@@ -17,6 +19,9 @@ export class GeminiSocket extends BaseWebSocket {
   private subscriptions: Subscription | Subscription[] | undefined;
   private api: "public" | "private";
   private endpoint: string;
+  private lastHeartbeat: number;
+  private heartbeatInterval: NodeJS.Timeout | undefined;
+
   constructor({
     endpoint,
     messageHandler,
@@ -24,23 +29,45 @@ export class GeminiSocket extends BaseWebSocket {
     subscriptions,
   }: GeminiSocketConstructorParams) {
     const url = `wss://api.gemini.com${endpoint}`;
-    super(url, messageHandler);
+
+    const wrappedMessageHandler: MessageHandler = (data: WebSocket.Data) => {
+      const message = JSON.parse(data.toString());
+
+      // Update heartbeat if the message is a heartbeat message
+      if (this.isHeartbeatMessage(message)) {
+        if (IS_PROD) console.log(`${this.id} Heartbeat ❤️`);
+        this.updateLastHeartbeat();
+      }
+
+      // Call the original message handler
+      messageHandler(data);
+    };
+
+    const headers = GeminiSocket.createHeaders(api, endpoint);
+
+    super(url, wrappedMessageHandler, endpoint, headers);
     this.api = api;
     this.endpoint = endpoint;
     this.subscriptions = subscriptions;
+    this.lastHeartbeat = Date.now();
+    this.heartbeatInterval = undefined;
   }
 
-  getHeaders() {
-    if (this.api === "public") return {};
+  private static createHeaders(api: "public" | "private", endpoint: string) {
+    if (api === "public") return {};
+
+    console.log("ok getting header");
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
     const GEMINI_API_SECRET = process.env.GEMINI_API_SECRET!;
     const nonce = Date.now();
 
     // Create the payload
     const payload = {
-      request: this.endpoint,
+      request: endpoint,
       nonce,
     };
+
+    console.log("here is payload", payload);
 
     // Stringify and Base64 encode the payload
     const base64Payload = Buffer.from(JSON.stringify(payload)).toString(
@@ -59,6 +86,23 @@ export class GeminiSocket extends BaseWebSocket {
     };
   }
 
+  protected onOpen(): void {
+    console.log(`CONNECTED TO GEMINI ${this.id} socket!`);
+    this.handleSubscriptions();
+
+    console.log("SETTING HEARTBEAT CHECKER");
+    this.heartbeatInterval = setInterval(() => {
+      if (Date.now() - this.lastHeartbeat > 5000) {
+        console.log("Missed heartbeat. Reconnecting...");
+        this.reconnect();
+      }
+    }, 6000);
+  }
+
+  protected onClose(): void {
+    clearInterval(this.heartbeatInterval);
+  }
+
   protected handleSubscriptions() {
     if (!this.subscriptions) return;
 
@@ -69,5 +113,13 @@ export class GeminiSocket extends BaseWebSocket {
     subscriptionsArray.forEach((subscription) => {
       this.ws.send(JSON.stringify(subscription));
     });
+  }
+
+  private isHeartbeatMessage(message: any) {
+    return message.type === "heartbeat";
+  }
+
+  private updateLastHeartbeat(): void {
+    this.lastHeartbeat = Date.now();
   }
 }

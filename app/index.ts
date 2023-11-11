@@ -23,6 +23,7 @@ async function main() {
     endpoint: "/v2/marketdata/BTCUSD",
     messageHandler: (data: WebSocket.Data) => {
       const message = JSON.parse(data.toString());
+
       if (message.type === "candles_1m_updates") {
         const candle = message.changes[0];
         const [, , , , close] = candle;
@@ -38,6 +39,16 @@ async function main() {
       },
     ],
   });
+
+  // const orderEventsSocket = new GeminiSocket({
+  //   endpoint: "/v1/order/events",
+  //   messageHandler: (data: WebSocket.Data) => {
+  //     const message = JSON.parse(data.toString());
+
+  //     console.log("here is order event message,", message);
+  //   },
+  //   api: "private",
+  // });
 
   app.listen(PORT, () => {
     console.log(
