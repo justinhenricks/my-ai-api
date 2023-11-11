@@ -5,12 +5,23 @@ export type MessageHandler = (data: WebSocket.Data) => void;
 export abstract class BaseWebSocket {
   protected ws: WebSocket;
   protected messageHandler: MessageHandler;
+  protected headers: {};
 
   constructor(protected url: string, messageHandler: MessageHandler) {
     this.messageHandler = messageHandler;
-    // pass in headers?
-    this.ws = new WebSocket(url);
+    this.headers = this.getHeaders();
+    this.ws = new WebSocket(url, {
+      headers: this.headers,
+    });
     this.setupEventListeners();
+  }
+
+  protected getHeaders() {
+    console.log(
+      "No headers registered - override this function to return an onject of headers."
+    );
+
+    return {};
   }
 
   private setupEventListeners() {
@@ -25,7 +36,11 @@ export abstract class BaseWebSocket {
     this.handleSubscriptions();
   }
 
-  protected abstract handleSubscriptions(): void;
+  protected handleSubscriptions() {
+    console.log(
+      "No subscriptions registered - override this function to handle subscriptions."
+    );
+  }
 
   protected onClose() {
     console.log("Disconnected from WebSocket server!");
