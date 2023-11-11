@@ -13,11 +13,11 @@ const SELL_GAIN = 1.01;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
-const MAX_OPEN_ORDERS = 2;
+const MAX_OPEN_ORDERS = 3;
 
 //SHORT TERM TEST
-// const SHORT_EMA_PERIOD = 2;
-// const LONG_EMA_PERIOD = 5;
+// const SHORT_EMA_PERIOD = 1;
+// const LONG_EMA_PERIOD = 2;
 class MarketDataWebSocket {
   private ws: WebSocket;
   private emaCalculator: EmaCalculator;
@@ -61,7 +61,7 @@ class MarketDataWebSocket {
         const longTermEma = this.emaCalculator.getLongTermEma();
 
         console.log("CURRENT SHORT TERM EMA: ", shortTermEma);
-        console.log("CURRENT CURRENT LONG TERM EMA: ", longTermEma);
+        console.log("CURRENT LONG TERM EMA: ", longTermEma);
 
         if (
           shortTermEma &&
