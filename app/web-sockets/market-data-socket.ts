@@ -3,7 +3,7 @@ import { IS_PROD } from "../constants";
 import { db } from "../db";
 import EmaCalculator from "../trading/ema-calculator";
 import { Trader } from "../trading/trader";
-import { BaseWebSocket, MessageHandler } from "./base-socket";
+import { MessageHandler } from "./base-socket";
 
 const apiKey: string = process.env.GEMINI_API_KEY!;
 const apiSecret: string = process.env.GEMINI_API_SECRET!;
@@ -14,12 +14,13 @@ const SELL_GAIN = 1.01;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
-const MAX_OPEN_ORDERS = 2;
+const MAX_OPEN_ORDERS = 3;
 
 //SHORT TERM TEST
-// const SHORT_EMA_PERIOD = 2;
-// const LONG_EMA_PERIOD = 5;
-class MarketDataWebSocket extends BaseWebSocket {
+// const SHORT_EMA_PERIOD = 1;
+// const LONG_EMA_PERIOD = 2;
+class MarketDataWebSocket {
+  private ws: WebSocket;
   private emaCalculator: EmaCalculator;
   private trader: Trader;
   private prevShortTermEma: number | undefined = undefined;
@@ -56,7 +57,7 @@ class MarketDataWebSocket extends BaseWebSocket {
         const longTermEma = this.emaCalculator.getLongTermEma();
 
         console.log("CURRENT SHORT TERM EMA: ", shortTermEma);
-        console.log("CURRENT CURRENT LONG TERM EMA: ", longTermEma);
+        console.log("CURRENT LONG TERM EMA: ", longTermEma);
 
         if (
           shortTermEma &&

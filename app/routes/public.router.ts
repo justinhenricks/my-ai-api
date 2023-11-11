@@ -6,7 +6,6 @@ const router = express.Router();
 router.get("/health-check", async (req, res) => {
   try {
     const userCount = await db.user.count();
-    console.log("Health check ✅");
     res.json({
       message: `Alls well on the justy front.`,
     });
