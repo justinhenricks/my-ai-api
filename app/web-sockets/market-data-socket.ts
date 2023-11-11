@@ -3,6 +3,7 @@ import { IS_PROD } from "../constants";
 import { db } from "../db";
 import EmaCalculator from "../trading/ema-calculator";
 import { Trader } from "../trading/trader";
+import { BaseWebSocket, MessageHandler } from "./base-socket";
 
 const apiKey: string = process.env.GEMINI_API_KEY!;
 const apiSecret: string = process.env.GEMINI_API_SECRET!;
@@ -18,25 +19,19 @@ const MAX_OPEN_ORDERS = 2;
 //SHORT TERM TEST
 // const SHORT_EMA_PERIOD = 2;
 // const LONG_EMA_PERIOD = 5;
-class MarketDataWebSocket {
-  private ws: WebSocket;
+class MarketDataWebSocket extends BaseWebSocket {
   private emaCalculator: EmaCalculator;
   private trader: Trader;
   private prevShortTermEma: number | undefined = undefined;
   private prevLongTermEma: number | undefined = undefined;
 
-  constructor(private url: string) {
-    this.ws = new WebSocket(this.url);
+  constructor(protected url: string, messageHandler: MessageHandler) {
+    super(url, messageHandler);
     this.emaCalculator = new EmaCalculator(SHORT_EMA_PERIOD, LONG_EMA_PERIOD);
     this.trader = new Trader(apiKey, apiSecret);
-    this.ws.on("open", this.onOpen.bind(this));
-    this.ws.on("message", this.onMessage.bind(this));
-    this.ws.on("close", this.onClose.bind(this));
-    this.ws.on("error", this.onError.bind(this));
   }
 
-  private onOpen() {
-    console.log("Connected to the MarketData WebSocket server!");
+  protected handleSubscriptions(): void {
     const subscribeMessage = {
       type: "subscribe",
       subscriptions: [{ name: "candles_1m", symbols: ["BTCUSD"] }],
@@ -45,7 +40,7 @@ class MarketDataWebSocket {
   }
 
   // Where the magic happens
-  private async onMessage(data: WebSocket.Data) {
+  async onMessage(data: WebSocket.Data) {
     try {
       const message = JSON.parse(data.toString());
       if (message.type === "candles_1m_updates") {
@@ -153,16 +148,6 @@ class MarketDataWebSocket {
     } catch (error) {
       console.error("ERROR IN MY MINUTE CANDLE LISTENER", error);
     }
-  }
-
-  private onClose() {
-    console.log("Disconnected from the MarketData WebSocket server!");
-    // Handle reconnection logic here
-  }
-
-  private onError(error: Error) {
-    console.error("WebSocket error:", error);
-    // Handle error and possible reconnection logic here
   }
 }
 
