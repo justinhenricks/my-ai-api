@@ -5,13 +5,13 @@ import { sendEmail } from "../services/postmark";
 class OrderEventsWebSocket {
   private ws: WebSocket;
   private lastHeartbeat: number;
-  private heartbeatInterval: NodeJS.Timeout;
+  private heartbeatInterval: NodeJS.Timeout | undefined;
 
   constructor(private url: string) {
     const headers = this.getHeaders();
     // Create a nonce
     this.lastHeartbeat = Date.now();
-
+    this.heartbeatInterval = undefined; // Initialize here
     // Setup WebSocket connection
     this.ws = new WebSocket("wss://api.gemini.com/v1/order/events", {
       headers,
