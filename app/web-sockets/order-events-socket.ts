@@ -97,6 +97,7 @@ class OrderEventsWebSocket {
         const { price: fillPrice, amount } = fill;
 
         if (side === "buy") {
+          console.log("ITS A BUY EVENT");
           let amountSpent = parseFloat(fillPrice) * parseFloat(amount);
 
           const persistedOrder = await db.trade.create({
@@ -116,6 +117,7 @@ class OrderEventsWebSocket {
             body: emailBody,
           });
         } else if (side === "sell") {
+          console.log("ITS A SELL EVENT");
           if (!client_order_id) {
             const emailBody = `Successful sell order placed, but had no corresponding order ID to look up the trade in the DB!! Here is the payload though: 
             ${JSON.stringify(fillEvent)}
