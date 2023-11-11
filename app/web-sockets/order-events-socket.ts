@@ -167,6 +167,7 @@ class OrderEventsWebSocket {
 
   private onClose() {
     console.log("Disconnected from the MarketData WebSocket server!");
+    clearInterval(this.heartbeatInterval);
     // Handle reconnection logic here
   }
 
