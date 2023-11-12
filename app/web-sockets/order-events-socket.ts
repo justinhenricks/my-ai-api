@@ -55,8 +55,6 @@ class OrderEventsWebSocket {
     console.log("Connected to the Order Events WebSocket server!");
     // Start checking for heartbeats every 5 seconds
     this.heartbeatInterval = setInterval(() => {
-      console.log("right now", Date.now());
-      console.log("last heartbeat at", this.lastHeartbeat);
       if (Date.now() - this.lastHeartbeat > 7000) {
         console.log("Missed heartbeat. Reconnecting...");
         this.reconnect();
@@ -169,7 +167,6 @@ class OrderEventsWebSocket {
 
   private onClose() {
     console.log("Disconnected from the Order Events server!");
-    clearInterval(this.heartbeatInterval);
     // Handle reconnection logic here
   }
 
