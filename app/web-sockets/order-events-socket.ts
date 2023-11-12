@@ -55,7 +55,9 @@ class OrderEventsWebSocket {
     console.log("Connected to the Order Events WebSocket server!");
     // Start checking for heartbeats every 5 seconds
     this.heartbeatInterval = setInterval(() => {
-      if (Date.now() - this.lastHeartbeat > 6000) {
+      console.log("right now", Date.now());
+      console.log("last heartbeat at", this.lastHeartbeat);
+      if (Date.now() - this.lastHeartbeat > 7000) {
         console.log("Missed heartbeat. Reconnecting...");
         this.reconnect();
       }
@@ -76,7 +78,7 @@ class OrderEventsWebSocket {
       // Let's only deal with the array messages (ack and heartbeats are not an array)
       if (!Array.isArray(message)) return;
 
-      console.log("WE GOT AN ORDER EVENT:", message);
+      // console.log("WE GOT AN ORDER EVENT:", message);
 
       const fillEvents = message.filter((message) => message.type === "fill");
 
@@ -166,7 +168,7 @@ class OrderEventsWebSocket {
   }
 
   private onClose() {
-    console.log("Disconnected from the MarketData WebSocket server!");
+    console.log("Disconnected from the Order Events server!");
     clearInterval(this.heartbeatInterval);
     // Handle reconnection logic here
   }
