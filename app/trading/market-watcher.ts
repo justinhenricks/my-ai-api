@@ -5,7 +5,7 @@ import { GeminiSocket } from "../web-sockets/gemini-socket";
 import EmaCalculator from "./ema-calculator";
 import { Trader } from "./trader";
 
-const BASE_TRADE_AMOUNT = 10;
+const BASE_TRADE_AMOUNT = 12;
 const SELL_GAIN = 1.01;
 
 const SHORT_EMA_PERIOD = 30;
@@ -91,7 +91,7 @@ export class MarketWatcher {
           const order = await this.trader.buy({
             amountUSD: amountToBuy,
             options: ["immediate-or-cancel"],
-            executionPriceMultiplier: 1.001,
+            executionPriceMultiplier: 1.1,
             symbol: this.symbol,
             type: "exchange limit",
           });
