@@ -1,77 +1,36 @@
-import { createHmac } from "crypto";
 import WebSocket from "ws";
 import { db } from "../db";
 import { sendEmail } from "../services/postmark";
-class OrderEventsWebSocket {
-  private ws: WebSocket;
-  private lastHeartbeat: number;
-  private heartbeatInterval: NodeJS.Timeout | undefined;
+import { GeminiSocket } from "../web-sockets/gemini-socket";
 
-  constructor(private url: string) {
-    const headers = this.getHeaders();
-    // Create a nonce
-    this.lastHeartbeat = Date.now();
-    this.heartbeatInterval = undefined; // Initialize here
-    // Setup WebSocket connection
-    this.ws = new WebSocket("wss://api.gemini.com/v1/order/events", {
-      headers,
+const apiKey: string = process.env.GEMINI_API_KEY!;
+const apiSecret: string = process.env.GEMINI_API_SECRET!;
+
+const BASE_TRADE_AMOUNT = 10;
+const SELL_GAIN = 1.01;
+
+// const SHORT_EMA_PERIOD = 30;
+// const LONG_EMA_PERIOD = 360;
+
+const SHORT_EMA_PERIOD = 2;
+const LONG_EMA_PERIOD = 5;
+
+const MAX_OPEN_ORDERS = 3;
+
+export class OrderWatcher {
+  orderEventSocket: GeminiSocket;
+
+  constructor() {
+    this.orderEventSocket = new GeminiSocket({
+      endpoint: "/v1/order/events",
+      messageHandler: this.handleMessage.bind(this),
+      api: "private",
     });
-
-    this.ws.on("open", this.onOpen.bind(this));
-    this.ws.on("message", this.onMessage.bind(this));
-    this.ws.on("close", this.onClose.bind(this));
-    this.ws.on("error", this.onError.bind(this));
   }
 
-  private getHeaders() {
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
-    const GEMINI_API_SECRET = process.env.GEMINI_API_SECRET!;
-    const nonce = Date.now();
-
-    // Create the payload
-    const payload = {
-      request: "/v1/order/events",
-      nonce,
-    };
-
-    // Stringify and Base64 encode the payload
-    const base64Payload = Buffer.from(JSON.stringify(payload)).toString(
-      "base64"
-    );
-
-    // Create the signature
-    const signature = createHmac("sha384", GEMINI_API_SECRET)
-      .update(base64Payload)
-      .digest("hex");
-
-    return {
-      "X-GEMINI-APIKEY": GEMINI_API_KEY,
-      "X-GEMINI-PAYLOAD": base64Payload,
-      "X-GEMINI-SIGNATURE": signature,
-    };
-  }
-
-  private onOpen() {
-    console.log("Connected to the Order Events WebSocket server!");
-    // Start checking for heartbeats every 5 seconds
-    this.heartbeatInterval = setInterval(() => {
-      if (Date.now() - this.lastHeartbeat > 7000) {
-        console.log("Missed heartbeat. Reconnecting...");
-        this.reconnect();
-      }
-    }, 5000);
-  }
-
-  private async onMessage(data: WebSocket.Data) {
+  private async handleMessage(data: WebSocket.Data) {
     try {
       const message = JSON.parse(data.toString());
-
-      if (message.type === "heartbeat") {
-        console.log(
-          `ORDER EVENT HEARTBEAT ❤️ ${message.timestampms} - ${message.trace_id}`
-        );
-        this.lastHeartbeat = message.timestampms;
-      }
 
       // Let's only deal with the array messages (ack and heartbeats are not an array)
       if (!Array.isArray(message)) return;
@@ -110,8 +69,8 @@ class OrderEventsWebSocket {
           console.log("ITS A SELL EVENT");
           if (!client_order_id) {
             const emailBody = `Successful sell order placed, but had no corresponding order ID to look up the trade in the DB!! Here is the payload though: 
-            ${JSON.stringify(fillEvent)}
-            `;
+              ${JSON.stringify(fillEvent)}
+              `;
 
             const email = sendEmail({
               subject: `SALE WITH MISSING ID`,
@@ -164,29 +123,4 @@ class OrderEventsWebSocket {
       console.error("ERROR IN MY MINUTE CANDLE LISTENER", error);
     }
   }
-
-  private onClose() {
-    console.log("Disconnected from the Order Events server!");
-    // Handle reconnection logic here
-  }
-
-  private onError(error: Error) {
-    console.error("WebSocket error:", error);
-    // Handle error and possible reconnection logic here
-  }
-
-  private reconnect() {
-    this.ws.close();
-    const headers = this.getHeaders();
-    this.ws = new WebSocket(this.url, {
-      headers,
-    });
-    // Reattach all event listeners
-    this.ws.on("open", this.onOpen.bind(this));
-    this.ws.on("message", this.onMessage.bind(this));
-    this.ws.on("close", this.onClose.bind(this));
-    this.ws.on("error", this.onError.bind(this));
-  }
 }
-
-export default OrderEventsWebSocket;

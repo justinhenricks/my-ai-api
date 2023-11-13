@@ -1,11 +1,9 @@
 import WebSocket from "ws";
 import { IS_PROD } from "../constants";
 import { db } from "../db";
-import EmaCalculator from "../trading/ema-calculator";
-import { Trader } from "../trading/trader";
-
-const apiKey: string = process.env.GEMINI_API_KEY!;
-const apiSecret: string = process.env.GEMINI_API_SECRET!;
+import { GeminiSocket } from "../web-sockets/gemini-socket";
+import EmaCalculator from "./ema-calculator";
+import { Trader } from "./trader";
 
 const BASE_TRADE_AMOUNT = 10;
 const SELL_GAIN = 1.01;
@@ -13,39 +11,37 @@ const SELL_GAIN = 1.01;
 const SHORT_EMA_PERIOD = 30;
 const LONG_EMA_PERIOD = 360;
 
+// const SHORT_EMA_PERIOD = 2;
+// const LONG_EMA_PERIOD = 5;
+
 const MAX_OPEN_ORDERS = 3;
 
-//SHORT TERM TEST
-// const SHORT_EMA_PERIOD = 1;
-// const LONG_EMA_PERIOD = 2;
-class MarketDataWebSocket {
-  private ws: WebSocket;
-  private emaCalculator: EmaCalculator;
-  private trader: Trader;
+export class MarketWatcher {
+  geminiPublicSocket: GeminiSocket;
+  emaCalculator: EmaCalculator;
+  trader: Trader;
   private prevShortTermEma: number | undefined = undefined;
   private prevLongTermEma: number | undefined = undefined;
 
-  constructor(private url: string) {
-    this.ws = new WebSocket(this.url);
+  constructor(symbol: string = "BTCUSD") {
     this.emaCalculator = new EmaCalculator(SHORT_EMA_PERIOD, LONG_EMA_PERIOD);
-    this.trader = new Trader(apiKey, apiSecret);
-    this.ws.on("open", this.onOpen.bind(this));
-    this.ws.on("message", this.onMessage.bind(this));
-    this.ws.on("close", this.onClose.bind(this));
-    this.ws.on("error", this.onError.bind(this));
+    this.trader = new Trader();
+    this.prevLongTermEma = undefined;
+    this.prevShortTermEma = undefined;
+    this.geminiPublicSocket = new GeminiSocket({
+      endpoint: `/v2/marketdata/${symbol}`,
+      messageHandler: this.handleMessage.bind(this),
+      api: "public",
+      subscriptions: [
+        {
+          type: "subscribe",
+          subscriptions: [{ name: "candles_1m", symbols: [symbol] }],
+        },
+      ],
+    });
   }
 
-  private onOpen() {
-    console.log("Connected to the MarketData WebSocket server!");
-    const subscribeMessage = {
-      type: "subscribe",
-      subscriptions: [{ name: "candles_1m", symbols: ["BTCUSD"] }],
-    };
-    this.ws.send(JSON.stringify(subscribeMessage));
-  }
-
-  // Where the magic happens
-  private async onMessage(data: WebSocket.Data) {
+  private async handleMessage(data: WebSocket.Data) {
     try {
       const message = JSON.parse(data.toString());
       if (message.type === "candles_1m_updates") {
@@ -85,30 +81,7 @@ class MarketDataWebSocket {
 
           console.log("WE BUYING! 🚀");
 
-          async function calculateTotalForNewTrade(
-            defaultValue: number
-          ): Promise<number> {
-            // Fetch all winning trades
-            const winningTrades = await db.trade.findMany({
-              where: { win: true },
-            });
-
-            // Calculate total profit from winning trades
-            const totalProfit = winningTrades.reduce(
-              (acc, trade) => acc + (trade.profit || 0),
-              0
-            );
-
-            // If there's no profit, use the default value
-            if (totalProfit === 0) {
-              return defaultValue;
-            }
-
-            // Otherwise, add the total profit to the default value
-            return defaultValue + totalProfit;
-          }
-
-          const amountToBuy = await calculateTotalForNewTrade(
+          const amountToBuy = await this.calculateTotalForNewTrade(
             BASE_TRADE_AMOUNT
           );
 
@@ -155,15 +128,26 @@ class MarketDataWebSocket {
     }
   }
 
-  private onClose() {
-    console.log("Disconnected from the MarketData WebSocket server!");
-    // Handle reconnection logic here
-  }
+  private async calculateTotalForNewTrade(
+    defaultValue: number
+  ): Promise<number> {
+    // Fetch all winning trades
+    const winningTrades = await db.trade.findMany({
+      where: { win: true },
+    });
 
-  private onError(error: Error) {
-    console.error("WebSocket error:", error);
-    // Handle error and possible reconnection logic here
+    // Calculate total profit from winning trades
+    const totalProfit = winningTrades.reduce(
+      (acc, trade) => acc + (trade.profit || 0),
+      0
+    );
+
+    // If there's no profit, use the default value
+    if (totalProfit === 0) {
+      return defaultValue;
+    }
+
+    // Otherwise, add the total profit to the default value
+    return defaultValue + totalProfit;
   }
 }
-
-export default MarketDataWebSocket;

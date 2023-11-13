@@ -1,23 +1,19 @@
 import "dotenv/config";
 import express from "express";
-import { GEMINI_PUBLIC_WS_BASE_URL, IS_PROD, PORT } from "./constants";
+import { IS_PROD, PORT } from "./constants";
 import "./crons/runner"; // This schedules the cron jobs
 import { router } from "./routes";
-import MarketDataWebSocket from "./web-sockets/market-data-socket";
-import OrderEventsWebSocket from "./web-sockets/order-events-socket";
+import { MarketWatcher } from "./trading/market-watcher";
+import { OrderWatcher } from "./trading/order-watcher";
 async function main() {
   const app = express();
 
   app.use(express.json());
   app.use(router);
 
-  const marketDataSocket = new MarketDataWebSocket(
-    `${GEMINI_PUBLIC_WS_BASE_URL}/v2/marketdata/BTCUSD`
-  );
-
-  const orderEventSocket = new OrderEventsWebSocket(
-    `wss://api.gemini.com/v1/order/events`
-  );
+  //Init Crpyto Bot
+  const marketWatcher = new MarketWatcher();
+  const orderWatcher = new OrderWatcher();
 
   app.listen(PORT, () => {
     console.log(
