@@ -1,6 +1,5 @@
 import { createHmac } from "crypto";
 import WebSocket from "ws";
-import { IS_PROD } from "../constants";
 import { BaseWebSocket, MessageHandler } from "./base-socket";
 
 export type Subscription = {
@@ -35,7 +34,7 @@ export class GeminiSocket extends BaseWebSocket {
 
       // Update heartbeat if the message is a heartbeat message
       if (this.isHeartbeatMessage(message)) {
-        if (IS_PROD) console.log(`${this.id} Heartbeat ❤️`);
+        console.log(`${this.id} Heartbeat ❤️`);
         this.updateLastHeartbeat();
       }
 
@@ -56,7 +55,6 @@ export class GeminiSocket extends BaseWebSocket {
   private static createHeaders(api: "public" | "private", endpoint: string) {
     if (api === "public") return {};
 
-    console.log("ok getting header");
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
     const GEMINI_API_SECRET = process.env.GEMINI_API_SECRET!;
     const nonce = Date.now();
@@ -66,8 +64,6 @@ export class GeminiSocket extends BaseWebSocket {
       request: endpoint,
       nonce,
     };
-
-    console.log("here is payload", payload);
 
     // Stringify and Base64 encode the payload
     const base64Payload = Buffer.from(JSON.stringify(payload)).toString(
