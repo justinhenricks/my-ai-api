@@ -3,20 +3,6 @@ import { db } from "../db";
 import { sendEmail } from "../services/postmark";
 import { GeminiSocket } from "../web-sockets/gemini-socket";
 
-const apiKey: string = process.env.GEMINI_API_KEY!;
-const apiSecret: string = process.env.GEMINI_API_SECRET!;
-
-const BASE_TRADE_AMOUNT = 10;
-const SELL_GAIN = 1.01;
-
-// const SHORT_EMA_PERIOD = 30;
-// const LONG_EMA_PERIOD = 360;
-
-const SHORT_EMA_PERIOD = 2;
-const LONG_EMA_PERIOD = 5;
-
-const MAX_OPEN_ORDERS = 3;
-
 export class OrderWatcher {
   orderEventSocket: GeminiSocket;
 
