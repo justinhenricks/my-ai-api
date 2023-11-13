@@ -12,7 +12,7 @@ async function main() {
   app.use(router);
 
   //Init Crpyto Bot
-  const marketWatcher = new MarketWatcher();
+  const marketWatcher = new MarketWatcher("solusd");
   const orderWatcher = new OrderWatcher();
 
   app.listen(PORT, () => {

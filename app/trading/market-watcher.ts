@@ -14,18 +14,20 @@ const LONG_EMA_PERIOD = 360;
 // const SHORT_EMA_PERIOD = 2;
 // const LONG_EMA_PERIOD = 5;
 
-const MAX_OPEN_ORDERS = 3;
+const MAX_OPEN_ORDERS = 5;
 
 export class MarketWatcher {
   geminiPublicSocket: GeminiSocket;
   emaCalculator: EmaCalculator;
   trader: Trader;
+  symbol: string;
   private prevShortTermEma: number | undefined = undefined;
   private prevLongTermEma: number | undefined = undefined;
 
   constructor(symbol: string = "BTCUSD") {
     this.emaCalculator = new EmaCalculator(SHORT_EMA_PERIOD, LONG_EMA_PERIOD);
     this.trader = new Trader();
+    this.symbol = symbol;
     this.prevLongTermEma = undefined;
     this.prevShortTermEma = undefined;
     this.geminiPublicSocket = new GeminiSocket({
@@ -90,8 +92,7 @@ export class MarketWatcher {
             amountUSD: amountToBuy,
             options: ["immediate-or-cancel"],
             executionPriceMultiplier: 1.001,
-            symbol: "btcusd",
-
+            symbol: this.symbol,
             type: "exchange limit",
           });
 
