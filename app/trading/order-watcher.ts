@@ -35,8 +35,6 @@ export class OrderWatcher {
       // Let's only deal with the array messages (ack and heartbeats are not an array)
       if (!Array.isArray(message)) return;
 
-      // console.log("WE GOT AN ORDER EVENT:", message);
-
       const fillEvents = message.filter((message) => message.type === "fill");
 
       for await (const fillEvent of fillEvents) {
