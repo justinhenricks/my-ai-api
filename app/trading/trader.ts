@@ -6,10 +6,10 @@ export class Trader {
   private apiKey: string;
   private apiSecret: string;
 
-  constructor(apiKey: string, apiSecret: string) {
-    this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
-    this.client = new GeminiApiClient(apiKey, apiSecret);
+  constructor() {
+    this.apiKey = process.env.GEMINI_API_KEY!;
+    this.apiSecret = process.env.GEMINI_API_SECRET!;
+    this.client = new GeminiApiClient(this.apiKey, this.apiSecret);
   }
 
   // Utilize this method to execute trades based on the strategy
