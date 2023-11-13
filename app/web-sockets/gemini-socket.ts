@@ -86,17 +86,17 @@ export class GeminiSocket extends BaseWebSocket {
     console.log(`CONNECTED TO GEMINI ${this.id} socket!`);
     this.handleSubscriptions();
 
-    console.log("SETTING HEARTBEAT CHECKER");
+    console.log(`SETTING ${this.id} HEARTBEAT CHECKER`);
     this.heartbeatInterval = setInterval(() => {
       if (Date.now() - this.lastHeartbeat > 5000) {
-        console.log("Missed heartbeat. Reconnecting...");
+        console.log(`Missed ${this.id} heartbeat. Reconnecting...`);
         this.reconnect();
       }
     }, 6000);
   }
 
   protected onClose(): void {
-    clearInterval(this.heartbeatInterval);
+    console.log(`Closed ${this.id} web socket`);
   }
 
   protected handleSubscriptions() {
