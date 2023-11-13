@@ -15,29 +15,15 @@ export abstract class BaseWebSocket {
     headers: {}
   ) {
     this.messageHandler = messageHandler;
-    // this.headers = this.getHeaders();
     this.id = id;
-    this.headers = headers; // Use the passed headers
-
-    console.log("do i have headers? ", this.headers);
-
-    console.log("here is url", url);
+    this.headers = headers;
     this.ws = new WebSocket(url, {
       headers: this.headers,
     });
     this.setupEventListeners();
   }
 
-  protected getHeaders() {
-    console.log(
-      "No headers registered - override this function to return an onject of headers."
-    );
-
-    return {};
-  }
-
   private setupEventListeners() {
-    console.log("in setup here is message handler", this.messageHandler);
     this.ws.on("open", this.onOpen.bind(this));
     this.ws.on("message", (data) => this.messageHandler(data));
     this.ws.on("close", this.onClose.bind(this));
@@ -57,13 +43,12 @@ export abstract class BaseWebSocket {
 
   protected onClose() {
     console.log(`Disconnected from WebSocket ${this.id} server!`);
-    // Reconnection logic
   }
 
   protected reconnect() {
     console.log(`Reconnecting to WebSocket: ${this.id}`);
     this.ws.close();
-    const headers = this.getHeaders();
+    const headers = this.headers;
     this.ws = new WebSocket(this.url, {
       headers,
     });
@@ -73,6 +58,5 @@ export abstract class BaseWebSocket {
 
   protected onError(error: Error) {
     console.error(`WebSocket ${this.id} error:`, error);
-    // Error handling
   }
 }
