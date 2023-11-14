@@ -23,40 +23,20 @@ export abstract class BaseWebSocket {
     this.setupEventListeners();
   }
 
-  private setupEventListeners() {
+  protected setupEventListeners() {
     this.ws.on("open", this.onOpen.bind(this));
     this.ws.on("message", (data) => this.messageHandler(data));
     this.ws.on("close", this.onClose.bind(this));
     this.ws.on("error", this.onError.bind(this));
   }
 
-  protected onOpen() {
-    console.log(`Connected to WebSocket ${this.id} server!`);
-    this.handleSubscriptions();
-  }
+  protected abstract onOpen(): void;
 
-  protected handleSubscriptions() {
-    console.log(
-      `No subscriptions registered for ${this.id} - override this function to handle subscriptions.`
-    );
-  }
+  protected abstract handleSubscriptions(): void;
 
-  protected onClose() {
-    console.log(`Disconnected from WebSocket ${this.id} server!`);
-  }
+  protected abstract onClose(): void;
 
-  protected reconnect() {
-    console.log(`Reconnecting to WebSocket: ${this.id}`);
-    this.ws.close();
-    const headers = this.headers;
-    this.ws = new WebSocket(this.url, {
-      headers,
-    });
-    // Reattach all event listeners
-    this.setupEventListeners();
-  }
+  protected abstract reconnect(): void;
 
-  protected onError(error: Error) {
-    console.error(`WebSocket ${this.id} error:`, error);
-  }
+  protected abstract onError(error: Error): void;
 }

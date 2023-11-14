@@ -83,20 +83,15 @@ export class GeminiSocket extends BaseWebSocket {
   }
 
   protected onOpen(): void {
-    console.log(`CONNECTED TO GEMINI ${this.id} socket!`);
+    console.log(`SUCCESSFULLY CONNECTED TO GEMINI ${this.id} socket!`);
     this.handleSubscriptions();
 
-    console.log(`SETTING ${this.id} HEARTBEAT CHECKER`);
     this.heartbeatInterval = setInterval(() => {
       if (Date.now() - this.lastHeartbeat > 5000) {
         console.log(`Missed ${this.id} heartbeat. Reconnecting...`);
         this.reconnect();
       }
     }, 6000);
-  }
-
-  protected onClose(): void {
-    console.log(`Closed ${this.id} web socket`);
   }
 
   protected handleSubscriptions() {
@@ -117,5 +112,43 @@ export class GeminiSocket extends BaseWebSocket {
 
   private updateLastHeartbeat(): void {
     this.lastHeartbeat = Date.now();
+  }
+
+  protected async reconnect() {
+    console.log(`Reconnecting to Gemini WebSocket: ${this.id}`);
+    // Check if the WebSocket is already trying to connect
+    if (this.ws.readyState === WebSocket.CONNECTING) {
+      console.log(
+        "WebSocket is already connecting, waiting before reconnection..."
+      );
+      return;
+    }
+
+    // Close the existing WebSocket only if it's open
+    if (this.ws.readyState === WebSocket.OPEN) {
+      console.log(`GOING TO CLOSE ${this.id} SOCKET`);
+      this.ws.close();
+    }
+
+    // Recalculate headers for private API
+    if (this.api === "private") {
+      this.headers = GeminiSocket.createHeaders(this.api, this.endpoint);
+    }
+
+    console.log(`OK ABOUT TO TRY AND RECONNECT TO ${this.id}`);
+    this.ws = new WebSocket(this.url, {
+      headers: this.headers,
+    });
+
+    // Reattach all event listeners
+    this.setupEventListeners();
+  }
+
+  protected onClose() {
+    console.log(`DISCONNECTED FROM ${this.id} SOCKET!`);
+  }
+
+  protected onError(error: Error) {
+    console.error(`WebSocket ${this.id} error:`, error);
   }
 }
