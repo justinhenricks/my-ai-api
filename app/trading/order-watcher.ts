@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import { db } from "../db";
-import { sendEmail } from "../services/postmark";
+import { sendEmail } from "../services/email";
 import { GeminiSocket } from "../web-sockets/gemini-socket";
 
 export class OrderWatcher {
@@ -65,7 +65,7 @@ export class OrderWatcher {
 
           const email = sendEmail({
             subject: "NEW GEMINI ORDER",
-            body: emailBody,
+            text: emailBody,
           });
         } else if (side === "sell") {
           console.log("ITS A SELL EVENT");
@@ -74,10 +74,10 @@ export class OrderWatcher {
               ${JSON.stringify(closeEvent)}
               `;
 
-            // const email = sendEmail({
-            //   subject: `SALE WITH MISSING ID`,
-            //   body: emailBody,
-            // });
+            const email = sendEmail({
+              subject: `SALE WITH MISSING ID`,
+              text: emailBody,
+            });
 
             return;
           }
@@ -118,7 +118,7 @@ export class OrderWatcher {
 
           const email = sendEmail({
             subject: `WINNER SALE! 🚀🚀🚀`,
-            body: emailBody,
+            text: emailBody,
           });
         }
       }
