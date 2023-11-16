@@ -21,24 +21,42 @@ export class OrderWatcher {
       // Let's only deal with the array messages (ack and heartbeats are not an array)
       if (!Array.isArray(message)) return;
 
-      const fillEvents = message.filter((message) => message.type === "fill");
+      console.log("HERE IS MESSAGE", message);
 
-      for await (const fillEvent of fillEvents) {
-        if (fillEvent.api_session != process.env.GEMINI_API_KEY) continue; //only deal with order events placed from this server.
+      const fillEvents = message.filter((message) => message.type === "fill"); //If we want to create a more complicated model where we associate many fills with orders, this is what we'd use
+      const closeEvents = message.filter(
+        (message) => message.type === "closed"
+      );
 
-        const { client_order_id, symbol, fill, side } = fillEvent;
-        const { price: fillPrice, amount } = fill;
+      /**
+       * Only going to deal with tracking 'closed' events for now, as we know the buy or sell has been fully executed at that point.
+       *
+       * Going to use the avg_execution_price * executed_amount to give the *actual* amount of $$ spent or gained. After doing some testing, it seems
+       * this is the actual number that is deducted or added to my balance, so seems most accurate to just use that.
+       */
+
+      for await (const closeEvent of closeEvents) {
+        if (closeEvent.api_session != process.env.GEMINI_API_KEY) continue; //only deal with order events placed from this server.
+
+        const {
+          client_order_id,
+          symbol,
+          side,
+          avg_execution_price,
+          executed_amount,
+        } = closeEvent;
 
         if (side === "buy") {
           console.log("ITS A BUY EVENT");
-          let amountSpent = parseFloat(fillPrice) * parseFloat(amount);
+          let amountSpent =
+            parseFloat(avg_execution_price) * parseFloat(executed_amount);
 
           const persistedOrder = await db.trade.create({
             data: {
               id: client_order_id,
               money_spent: parseFloat(amountSpent.toFixed(4)),
-              buy_price: parseFloat(fillPrice),
-              buy_coin_amount: parseFloat(amount),
+              buy_price: parseFloat(avg_execution_price),
+              buy_coin_amount: parseFloat(executed_amount),
               symbol,
             },
           });
@@ -53,13 +71,13 @@ export class OrderWatcher {
           console.log("ITS A SELL EVENT");
           if (!client_order_id) {
             const emailBody = `Successful sell order placed, but had no corresponding order ID to look up the trade in the DB!! Here is the payload though: 
-              ${JSON.stringify(fillEvent)}
+              ${JSON.stringify(closeEvent)}
               `;
 
-            const email = sendEmail({
-              subject: `SALE WITH MISSING ID`,
-              body: emailBody,
-            });
+            // const email = sendEmail({
+            //   subject: `SALE WITH MISSING ID`,
+            //   body: emailBody,
+            // });
 
             return;
           }
@@ -75,7 +93,8 @@ export class OrderWatcher {
           const { money_spent } = originalBuyTrade;
 
           const profit =
-            parseFloat(fillPrice) * parseFloat(amount) - money_spent;
+            parseFloat(avg_execution_price) * parseFloat(executed_amount) -
+            money_spent;
 
           console.log(
             "WINNER SALE! 🚀🚀🚀 PROFIT:",
@@ -88,8 +107,8 @@ export class OrderWatcher {
               status: "closed",
               win: true,
               profit: parseFloat(profit.toFixed(4)),
-              sell_coint_amount: parseFloat(amount),
-              sell_price: parseFloat(fillPrice),
+              sell_coint_amount: parseFloat(avg_execution_price),
+              sell_price: parseFloat(executed_amount),
             },
           });
 
