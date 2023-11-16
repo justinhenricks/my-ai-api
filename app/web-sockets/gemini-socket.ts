@@ -91,7 +91,7 @@ export class GeminiSocket extends BaseWebSocket {
     }
 
     this.heartbeatInterval = setInterval(() => {
-      if (Date.now() - this.lastHeartbeat > 1000) {
+      if (Date.now() - this.lastHeartbeat > 6000) {
         console.log(`Missed ${this.id} heartbeat. Reconnecting...`);
         this.reconnect();
       }
