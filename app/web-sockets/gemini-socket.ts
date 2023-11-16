@@ -86,8 +86,12 @@ export class GeminiSocket extends BaseWebSocket {
     console.log(`SUCCESSFULLY CONNECTED TO GEMINI ${this.id} socket!`);
     this.handleSubscriptions();
 
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+
     this.heartbeatInterval = setInterval(() => {
-      if (Date.now() - this.lastHeartbeat > 5000) {
+      if (Date.now() - this.lastHeartbeat > 1000) {
         console.log(`Missed ${this.id} heartbeat. Reconnecting...`);
         this.reconnect();
       }
@@ -116,19 +120,10 @@ export class GeminiSocket extends BaseWebSocket {
 
   protected async reconnect() {
     console.log(`Reconnecting to Gemini WebSocket: ${this.id}`);
-    // Check if the WebSocket is already trying to connect
-    if (this.ws.readyState === WebSocket.CONNECTING) {
-      console.log(
-        "WebSocket is already connecting, waiting before reconnection..."
-      );
-      return;
-    }
 
     // Close the existing WebSocket only if it's open
-    if (this.ws.readyState === WebSocket.OPEN) {
-      console.log(`GOING TO CLOSE ${this.id} SOCKET`);
-      this.ws.close();
-    }
+    console.log(`GOING TO CLOSE ${this.id} SOCKET`);
+    this.ws.close();
 
     // Recalculate headers for private API
     if (this.api === "private") {
