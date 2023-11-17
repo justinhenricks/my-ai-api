@@ -107,8 +107,8 @@ export class OrderWatcher {
               status: "closed",
               win: true,
               profit: parseFloat(profit.toFixed(4)),
-              sell_coint_amount: parseFloat(avg_execution_price),
-              sell_price: parseFloat(executed_amount),
+              sell_coint_amount: parseFloat(executed_amount),
+              sell_price: parseFloat(avg_execution_price),
             },
           });
 
