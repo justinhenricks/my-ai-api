@@ -1,3 +1,3 @@
-# 🚀 Personal API and AI Interface
+# 🚀 justinode
 
-Server used to expose and interact with different bits of data as well as interface with LLM's.
+My node server that handles a variety of tasks and powers different bots and services.
