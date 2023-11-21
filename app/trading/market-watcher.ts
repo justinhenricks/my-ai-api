@@ -8,13 +8,18 @@ import { Trader } from "./trader";
 const BASE_TRADE_AMOUNT = 12;
 const SELL_GAIN = 1.01;
 
-const SHORT_EMA_PERIOD = 30;
-const LONG_EMA_PERIOD = 360;
+// PREVIOUS TEST - 11/16-11/21
+// const SHORT_EMA_PERIOD = 30;
+// const LONG_EMA_PERIOD = 360;
 
 // const SHORT_EMA_PERIOD = 2;
 // const LONG_EMA_PERIOD = 5;
 
-const MAX_OPEN_ORDERS = 5;
+//Changed 11/21 at 4:00.. testing.
+const SHORT_EMA_PERIOD = 15;
+const LONG_EMA_PERIOD = 60;
+
+const MAX_OPEN_ORDERS = 10;
 
 export class MarketWatcher {
   geminiPublicSocket: GeminiSocket;
