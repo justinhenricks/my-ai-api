@@ -1,6 +1,5 @@
 import WebSocket from "ws";
 import { db } from "../db";
-import { sendEmail } from "../services/email";
 import { GeminiSocket } from "../web-sockets/gemini-socket";
 
 export class OrderWatcher {
@@ -60,25 +59,9 @@ export class OrderWatcher {
               symbol,
             },
           });
-
-          const emailBody = `YO! ORDER PLACED, BOUGHT: ${amountSpent} of ${symbol}`;
-
-          const email = sendEmail({
-            subject: "NEW GEMINI ORDER",
-            text: emailBody,
-          });
         } else if (side === "sell") {
           console.log("ITS A SELL EVENT");
           if (!client_order_id) {
-            const emailBody = `Successful sell order placed, but had no corresponding order ID to look up the trade in the DB!! Here is the payload though: 
-              ${JSON.stringify(closeEvent)}
-              `;
-
-            const email = sendEmail({
-              subject: `SALE WITH MISSING ID`,
-              text: emailBody,
-            });
-
             return;
           }
 
@@ -110,15 +93,6 @@ export class OrderWatcher {
               sell_coint_amount: parseFloat(executed_amount),
               sell_price: parseFloat(avg_execution_price),
             },
-          });
-
-          const emailBody = `Successful sell order placed, you profited: ${parseFloat(
-            profit.toFixed(4)
-          )}`;
-
-          const email = sendEmail({
-            subject: `WINNER SALE! 🚀🚀🚀`,
-            text: emailBody,
           });
         }
       }
