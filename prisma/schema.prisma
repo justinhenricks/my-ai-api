@@ -57,3 +57,13 @@ enum TradeStatus {
   open
   closed
 }
+
+model GeminiPortfolioSummary {
+  id      String                 @id @default(cuid())
+
+  open_trades Int
+  cash_balance Float
+
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
