@@ -43,6 +43,7 @@ export class OrderWatcher {
           side,
           avg_execution_price,
           executed_amount,
+          price,
         } = closeEvent;
 
         if (side === "buy") {
@@ -75,9 +76,12 @@ export class OrderWatcher {
           if (!originalBuyTrade) return;
           const { money_spent } = originalBuyTrade;
 
-          const profit =
-            parseFloat(avg_execution_price) * parseFloat(executed_amount) -
-            money_spent;
+          const grossSaleTotal =
+            parseFloat(price) * parseFloat(executed_amount);
+
+          const netSaleTotalLessFee = grossSaleTotal - grossSaleTotal * 0.002;
+
+          const profit = netSaleTotalLessFee - money_spent;
 
           console.log(
             "WINNER SALE! 🚀🚀🚀 PROFIT:",
