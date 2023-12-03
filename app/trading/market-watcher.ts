@@ -5,7 +5,7 @@ import { GeminiSocket } from "../web-sockets/gemini-socket";
 import EmaCalculator from "./ema-calculator";
 import { Trader } from "./trader";
 
-const BASE_TRADE_AMOUNT = 12;
+const BASE_TRADE_AMOUNT = 25;
 const SELL_GAIN = 1.01;
 
 // PREVIOUS TEST - 11/16-11/21
