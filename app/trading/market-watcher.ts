@@ -16,13 +16,8 @@ const SELL_GAIN = 1.01;
 // const LONG_EMA_PERIOD = 5;
 
 //Changed 11/21 at 4:00.. testing.
-// const SHORT_EMA_PERIOD = 15;
-// const LONG_EMA_PERIOD = 60;
-
-//Changed 12/2.. previous worked ok.. lots of noise though, gonna extend long just a bit.
-
 const SHORT_EMA_PERIOD = 15;
-const LONG_EMA_PERIOD = 100;
+const LONG_EMA_PERIOD = 60;
 
 const MAX_OPEN_ORDERS = 10;
 
