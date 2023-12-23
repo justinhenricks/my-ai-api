@@ -5,7 +5,7 @@ import { GeminiSocket } from "../web-sockets/gemini-socket";
 import EmaCalculator from "./ema-calculator";
 import { Trader } from "./trader";
 
-const BASE_TRADE_AMOUNT = 25;
+const BASE_TRADE_AMOUNT = 60;
 const SELL_GAIN = 1.01;
 
 // PREVIOUS TEST - 11/16-11/21
@@ -154,6 +154,6 @@ export class MarketWatcher {
     }
 
     // Otherwise, add the total profit to the default value
-    return defaultValue + totalProfit;
+    return defaultValue + totalProfit / MAX_OPEN_ORDERS;
   }
 }
