@@ -31,7 +31,7 @@ const transformGigsJson = async (
   // Transform the first gig (next gig)
   const nextGig = gigs[0];
   const transformedNextGig = {
-    gig: `Next gig is: ${nextGig.summary} at ${
+    gig: `Justins next gig is: ${nextGig.summary} at ${
       nextGig.location
     }. Scheduled for ${nextGig.start?.dateTime} to ${nextGig.end?.dateTime}. ${
       nextGig.description ? `More Details: ${nextGig.description}` : ""
@@ -42,7 +42,7 @@ const transformGigsJson = async (
   const transformedFutureGigs = gigs.slice(1).map((gig, index) => {
     const { start, end, summary, description, location } = gig;
     return {
-      gig: `${index + 2}) Gig for Justin on: ${
+      gig: `${index + 2}) Future Gig for Justin on: ${
         start?.dateTime
       }, summary of event: ${summary} at ${location}. ${
         nextGig.description ? `More Details: ${nextGig.description}` : ""

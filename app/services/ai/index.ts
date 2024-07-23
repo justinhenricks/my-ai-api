@@ -1,12 +1,12 @@
 import { Prisma } from "@prisma/client";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { OpenAI } from "langchain/llms/openai";
-import { PrismaVectorStore } from "langchain/vectorstores/prisma";
+import { OpenAIEmbeddings, ChatOpenAI } from "@langchain/openai";
+import { PrismaVectorStore } from "@langchain/community/vectorstores/prisma";
 import { OPEN_AI_KEY } from "../../constants";
 import { db } from "../../db";
-export const llm = new OpenAI({
-  openAIApiKey: OPEN_AI_KEY,
-  modelName: "gpt-4",
+
+export const llm = new ChatOpenAI({
+  apiKey: OPEN_AI_KEY,
+  model: "gpt-4o",
 });
 
 export const embeddings = new OpenAIEmbeddings({

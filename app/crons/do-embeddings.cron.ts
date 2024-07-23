@@ -1,13 +1,13 @@
 import fs from "fs";
+// import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+// import { YoutubeLoader } from "langchain/document_loaders/web/youtube";
 import { JSONLoader } from "langchain/document_loaders/fs/json";
-import { PDFLoader } from "langchain/document_loaders/fs/pdf";
-import { TextLoader } from "langchain/document_loaders/fs/text";
-import { YoutubeLoader } from "langchain/document_loaders/web/youtube";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import path from "path";
 import { DATA_DIR } from "../constants";
 import { db } from "../db";
 import { vectorStore } from "../services/ai";
+import { TextLoader } from "langchain/document_loaders/fs/text";
 
 const youtubeURLs = [
   "https://www.youtube.com/watch?v=ynvldrONHOM", //5 benson licks
@@ -30,8 +30,8 @@ export async function doEmbeddings() {
     }
 
     const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 500,
-      chunkOverlap: 0,
+      chunkSize: 1000,
+      chunkOverlap: 200,
     });
 
     const splitDocs = await textSplitter.splitDocuments(documents);
@@ -93,24 +93,26 @@ const youtubeResources: YoutubeResource[] = youtubeURLs.map((url) => {
   return { url, type: "youtube" };
 });
 
-const resourceRegistry: Resource[] = [...fileResources, ...youtubeResources];
+const resourceRegistry: Resource[] = [...fileResources];
 
 async function loadDocument(resource: Resource) {
   switch (resource.type) {
     case "text":
       return new TextLoader(resource.path).load();
+    //TODO: add back in other types
     case "json":
       return new JSONLoader(resource.path).load();
-    case "pdf":
-      return new PDFLoader(resource.path).load();
-    case "youtube":
-      const youtubeLoader = YoutubeLoader.createFromUrl(resource.url, {
-        language: "en",
-        addVideoInfo: true,
-      });
-      return youtubeLoader.load();
+    // case "pdf":
+    //   return new PDFLoader(resource.path).load();
+    // case "youtube":
+    //   const youtubeLoader = YoutubeLoader.createFromUrl(resource.url, {
+    //     language: "en",
+    //     addVideoInfo: true,
+    //   });
+    //   return youtubeLoader.load();
     default:
       // Exhaustive type checking. If a new resource type is added and not handled, this will error
+      //@ts-ignore
       const _exhaustiveCheck: never = resource;
       return _exhaustiveCheck;
   }
